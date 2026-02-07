@@ -5,19 +5,25 @@ const ctx = canvas.getContext('2d');
 
 // Constants
 const TILE_SIZE = 32;
-const COLLISION_TILE_SIZE = 16;
-const ROWS = 20;
-const COLS = 20;
+const COLLISION_TILE_SIZE = 8; // Updated to 8px
+const ROWS = 40;               // 320 / 8
+const COLS = 40;               // 320 / 8
 const MOVEMENT_SPEED = 4;
 
 // Game State
 let isEditorMode = false;
 let inputEnabled = true;
 
+// Trigger Handler
+// (Trigger Handler removed - duplicate)
+
 // Dynamic Labels State
 let dynamicLabels = [...MAP_CONFIG.dynamicLabels];
 let selectedLabelIndex = -1;
 let isAddingLabel = false;
+
+// Map Data
+let collisionMap = JSON.parse(JSON.stringify(MAP_CONFIG.collisionMap));
 
 // Mouse State
 let mousePixelX = 0;
@@ -41,18 +47,18 @@ const keys = {
 };
 
 const player = {
-    x: 5,
-    y: 5,
-    pixelX: 5 * TILE_SIZE,
-    pixelY: 5 * TILE_SIZE,
+    x: 20,
+    y: 20,
+    pixelX: 20 * COLLISION_TILE_SIZE,
+    pixelY: 20 * COLLISION_TILE_SIZE,
     moving: false,
     direction: 'down',
-    targetX: 5 * TILE_SIZE,
-    targetY: 5 * TILE_SIZE
+    targetX: 20 * COLLISION_TILE_SIZE,
+    targetY: 20 * COLLISION_TILE_SIZE
 };
 
-// Map Data 20x20
-const collisionMap = JSON.parse(JSON.stringify(MAP_CONFIG.collisionMap));
+// Map Data
+// Map Data (Moved up)
 
 // Assets
 const mapImage = new Image();
@@ -114,13 +120,24 @@ canvas.addEventListener('mousedown', (e) => {
         return;
     }
 
-    // 2. Select existing label (Rough 80x20 box check based on user render strict)
+    // 2. Select existing label
     let clickedIndex = -1;
+    ctx.font = '8px "Press Start 2P"';
+
     for (let i = 0; i < dynamicLabels.length; i++) {
         const lbl = dynamicLabels[i];
-        // Rect: x-40, y-20, w80, h20
-        if (mousePixelX >= lbl.x - 40 && mousePixelX <= lbl.x + 40 &&
-            mousePixelY >= lbl.y - 20 && mousePixelY <= lbl.y) {
+
+        const textWidth = ctx.measureText(lbl.text).width;
+        const boxWidth = textWidth + 10;
+        const boxHeight = 16;
+
+        const boxLeft = lbl.x - boxWidth / 2;
+        const boxRight = lbl.x + boxWidth / 2;
+        const boxTop = lbl.y - 20;
+        const boxBottom = lbl.y;
+
+        if (mousePixelX >= boxLeft && mousePixelX <= boxRight &&
+            mousePixelY >= boxTop && mousePixelY <= boxBottom) {
             clickedIndex = i;
             break;
         }
@@ -142,8 +159,6 @@ canvas.addEventListener('mousemove', (e) => {
     if (isEditorMode) {
         const tooltip = document.getElementById('dev-tooltip');
         if (tooltip) {
-            // Remove positioning logic (handled by CSS fixed header)
-
             if (isAddingLabel) {
                 tooltip.innerText = "MODE: ADDING LABEL | Click anywhere on the map to name a building";
             } else if (selectedLabelIndex !== -1) {
@@ -221,7 +236,6 @@ if (exportBtn) {
     });
 }
 
-
 function update() {
     if (!inputEnabled || isEditorMode) return;
 
@@ -238,21 +252,18 @@ function update() {
             const nextGridX = player.x + dx;
             const nextGridY = player.y + dy;
 
-            if (nextGridX >= 0 && nextGridX < 10 && nextGridY >= 0 && nextGridY < 10) {
-                // Check 4 sub-tiles
-                const cX = nextGridX * 2;
-                const cY = nextGridY * 2;
+            // Updated Boundary Check (0-40)
+            if (nextGridX >= 0 && nextGridX < COLS && nextGridY >= 0 && nextGridY < ROWS) {
 
-                const isBlocked =
-                    collisionMap[cY][cX] === 1 ||
-                    collisionMap[cY][cX + 1] === 1 ||
-                    collisionMap[cY + 1][cX] === 1 ||
-                    collisionMap[cY + 1][cX + 1] === 1;
+                // Surgical Collision Check (8px grid)
+                const tileVal = collisionMap[nextGridY][nextGridX];
+                const isBlocked = (tileVal === 1);
 
                 if (!isBlocked) {
                     player.moving = true;
-                    player.targetX = nextGridX * TILE_SIZE;
-                    player.targetY = nextGridY * TILE_SIZE;
+                    // Use COLLISION_TILE_SIZE (8) for target pixels
+                    player.targetX = nextGridX * COLLISION_TILE_SIZE;
+                    player.targetY = nextGridY * COLLISION_TILE_SIZE;
                     player.x = nextGridX;
                     player.y = nextGridY;
 
@@ -261,15 +272,9 @@ function update() {
                     if (dx === -1) player.direction = 'left';
                     if (dx === 1) player.direction = 'right';
 
-                    // Check Triggers (Door = 2)
-                    const hitDoor =
-                        collisionMap[cY][cX] === 2 ||
-                        collisionMap[cY][cX + 1] === 2 ||
-                        collisionMap[cY + 1][cX] === 2 ||
-                        collisionMap[cY + 1][cX + 1] === 2;
-
-                    if (hitDoor) {
-                        // collision logic
+                    // Trigger Integration
+                    if (tileVal === 2) {
+                        checkBuildingTrigger(nextGridX, nextGridY);
                     }
                 }
             }
@@ -286,6 +291,12 @@ function update() {
     }
 }
 
+// Trigger Handler Placeholder (to avoid errors)
+function checkBuildingTrigger(gx, gy) {
+    console.log(`Trigger activated at ${gx}, ${gy}`);
+    // Future: Add building entry logic here
+}
+
 document.getElementById('close-btn').addEventListener('click', () => {
     const overlay = document.getElementById('transition-overlay');
     const readingWindow = document.getElementById('reading-window');
@@ -299,7 +310,7 @@ function draw() {
     if (assetsLoaded) {
         ctx.drawImage(mapImage, 0, 0);
     } else {
-        ctx.fillStyle = '#000';
+        ctx.fillStyle = '#202020';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
@@ -334,7 +345,7 @@ function draw() {
 
     // 3. Draw Player
     ctx.fillStyle = 'red';
-    ctx.fillRect(player.pixelX + 8, player.pixelY + 8, 16, 16);
+    ctx.fillRect(player.pixelX, player.pixelY, 8, 8);
 
     // 4. Editor Overlay
     if (isEditorMode) {
