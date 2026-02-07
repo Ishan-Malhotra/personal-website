@@ -14,6 +14,8 @@ body {
     position: relative;
     width: 640px;
     height: 640px;
+    margin-top: 60px;
+    /* Space for editor header */
     /* 320 * 2 */
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
     background-color: #000;
@@ -177,4 +179,27 @@ canvas {
 
 .hidden {
     display: none !important;
+}
+
+/* Editor Header */
+#dev-tooltip {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50px;
+    background: rgba(0, 255, 0, 0.9);
+    color: black;
+    z-index: 10000;
+    display: none;
+    /* Flex when active */
+    align-items: center;
+    justify-content: center;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 8px;
+    border-bottom: 3px solid black;
+}
+
+body.editor-active #dev-tooltip {
+    display: flex;
 }

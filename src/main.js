@@ -1,3 +1,5 @@
+import { MAP_CONFIG } from './mapData.js';
+
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 
@@ -13,7 +15,7 @@ let isEditorMode = false;
 let inputEnabled = true;
 
 // Dynamic Labels State
-let dynamicLabels = [];
+let dynamicLabels = [...MAP_CONFIG.dynamicLabels];
 let selectedLabelIndex = -1;
 let isAddingLabel = false;
 
@@ -50,14 +52,7 @@ const player = {
 };
 
 // Map Data 20x20
-const collisionMap = [];
-for (let r = 0; r < ROWS; r++) {
-    const row = [];
-    for (let c = 0; c < COLS; c++) {
-        row.push(0);
-    }
-    collisionMap.push(row);
-}
+const collisionMap = JSON.parse(JSON.stringify(MAP_CONFIG.collisionMap));
 
 // Assets
 const mapImage = new Image();
@@ -147,14 +142,14 @@ canvas.addEventListener('mousemove', (e) => {
     if (isEditorMode) {
         const tooltip = document.getElementById('dev-tooltip');
         if (tooltip) {
-            tooltip.style.left = (e.clientX + 15) + 'px';
-            tooltip.style.top = (e.clientY + 15) + 'px';
+            // Remove positioning logic (handled by CSS fixed header)
+
             if (isAddingLabel) {
-                tooltip.innerText = "Click to Place Label";
+                tooltip.innerText = "MODE: ADDING LABEL | Click anywhere on the map to name a building";
             } else if (selectedLabelIndex !== -1) {
-                tooltip.innerText = `Selected: ${dynamicLabels[selectedLabelIndex].text}`;
+                tooltip.innerText = `SELECTED: ${dynamicLabels[selectedLabelIndex].text} | Press BACKSPACE to delete`;
             } else {
-                tooltip.innerText = `Grid: ${mouseGridX}, ${mouseGridY}`;
+                tooltip.innerText = `EDITOR MODE | Grid: (${mouseGridX}, ${mouseGridY}) | 1: Wall, 2: Door, 0: Clear | Shift+E to Exit`;
             }
         }
     }
@@ -176,6 +171,7 @@ function toggleEditorMode() {
 
     const btn = document.getElementById('add-label-btn');
     const tooltip = document.getElementById('dev-tooltip');
+    const exportBtn = document.getElementById('export-btn');
 
     if (!isEditorMode) {
         isAddingLabel = false;
@@ -183,9 +179,11 @@ function toggleEditorMode() {
         document.body.style.cursor = 'default';
         if (btn) btn.style.display = 'none';
         if (tooltip) tooltip.style.display = 'none';
+        if (exportBtn) exportBtn.style.display = 'none';
     } else {
         if (btn) btn.style.display = 'block';
-        if (tooltip) tooltip.style.display = 'block';
+        if (tooltip) tooltip.style.display = 'flex';
+        if (exportBtn) exportBtn.style.display = 'block';
     }
     console.log(isEditorMode ? 'Dev Mode Active' : 'Dev Mode Inactive');
 }
@@ -307,24 +305,32 @@ function draw() {
 
     // 2. Dynamic Labels (Requested specific rendering loop)
     // 2. Dynamic Labels
+    // 2. Dynamic Labels (Auto-Width Implementation)
+    ctx.font = '8px "Press Start 2P"'; // Set font first to measure correctly
+    ctx.textAlign = 'center';          // Center text horizontally
+    ctx.textBaseline = 'middle';       // Center text vertically
+
     dynamicLabels.forEach((lbl, index) => {
-        // CHANGE 1: THE BOX SIZE
-        // Current: ctx.fillRect(lbl.x - 40, lbl.y - 20, 80, 20);
-        // Try these smaller values (40px wide, 12px tall):
+        // 1. Measure the word
+        const textWidth = ctx.measureText(lbl.text).width;
+
+        // 2. Calculate dynamic box size (Text width + 10px padding)
+        const boxWidth = textWidth + 10;
+        const boxHeight = 16;
+
+        // 3. Draw the background box
+        // Centered on lbl.x, sitting 20px above lbl.y
         ctx.fillStyle = (index === selectedLabelIndex) ? 'rgba(0, 255, 0, 0.6)' : 'rgba(0, 0, 0, 0.6)';
-        ctx.fillRect(lbl.x - 20, lbl.y - 20, 40, 20);
+        ctx.fillRect(lbl.x - (boxWidth / 2), lbl.y - 20, boxWidth, boxHeight);
 
-        // CHANGE 2: THE FONT SIZE
-        // Current: ctx.font = '10px "Press Start 2P"';
-        // Try 6px or 8px for a cleaner "GBA" look:
+        // 4. Draw the text perfectly in the middle of that box
         ctx.fillStyle = 'white';
-        ctx.font = '8px "Press Start 2P"';
-
-        // CHANGE 3: THE TEXT OFFSET
-        // Current: ctx.fillText(lbl.text, lbl.x - 35, lbl.y - 5);
-        // Adjust these to center your text in the smaller box:
-        ctx.fillText(lbl.text, lbl.x - 18, lbl.y - 4);
+        ctx.fillText(lbl.text, lbl.x, lbl.y - 12);
     });
+
+    // Reset alignment so it doesn't break the rest of your game's drawing
+    ctx.textAlign = 'start';
+    ctx.textBaseline = 'alphabetic';
 
     // 3. Draw Player
     ctx.fillStyle = 'red';
