@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oldale Town - Personal Website</title>
+    <link rel="stylesheet" href="src/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas" width="320" height="320"></canvas>
+        <div id="labels-container">
+            <div id="label-home" class="rooftop-label">HOME</div>
+            <div id="label-blog" class="rooftop-label">BLOG</div>
+            <div id="label-bookshelf" class="rooftop-label">BOOKSHELF</div>
+            <div id="label-theme" class="rooftop-label">THEME</div>
+        </div>
+        <div id="transition-overlay"></div>
+    </div>
+
+    <div id="reading-window" class="hidden">
+        <div class="content">
+            <h2 id="window-title">Welcome</h2>
+            <p id="window-text">Select an option to continue...</p>
+            <button id="close-btn">Close</button>
+        </div>
+    </div>
+
+    <button id="export-btn"
+        style="position: fixed; bottom: 10px; right: 10px; padding: 10px; font-family: 'Press Start 2P'; cursor: pointer; z-index: 1000;">Export
+        Map</button>
+
+    <script src="src/main.js"></script>
+</body>
+
+</html>
