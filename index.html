@@ -12,12 +12,6 @@
 <body>
     <div id="game-container">
         <canvas id="game-canvas" width="320" height="320"></canvas>
-        <div id="labels-container">
-            <div id="label-home" class="rooftop-label">HOME</div>
-            <div id="label-blog" class="rooftop-label">BLOG</div>
-            <div id="label-bookshelf" class="rooftop-label">BOOKSHELF</div>
-            <div id="label-theme" class="rooftop-label">THEME</div>
-        </div>
         <div id="transition-overlay"></div>
     </div>
 
@@ -29,9 +23,14 @@
         </div>
     </div>
 
+    <!-- Editor Tools -->
+    <div id="dev-tooltip"></div>
+    <button id="add-label-btn"
+        style="position:fixed; top:10px; left:10px; z-index:1000; display:none; padding: 10px; font-family: 'Press Start 2P'; cursor: pointer;">Add
+        Label</button>
     <button id="export-btn"
         style="position: fixed; bottom: 10px; right: 10px; padding: 10px; font-family: 'Press Start 2P'; cursor: pointer; z-index: 1000;">Export
-        Map</button>
+        Config</button>
 
     <script src="src/main.js"></script>
 </body>

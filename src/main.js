@@ -2,13 +2,27 @@ const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 
 // Constants
-const TILE_SIZE = 32;          // Visual/Movement step size
-const COLLISION_TILE_SIZE = 16; // Collision grid tile size
-const ROWS = 20;               // 320 / 16
-const COLS = 20;               // 320 / 16
+const TILE_SIZE = 32;
+const COLLISION_TILE_SIZE = 16;
+const ROWS = 20;
+const COLS = 20;
 const MOVEMENT_SPEED = 4;
 
 // Game State
+let isEditorMode = false;
+let inputEnabled = true;
+
+// Dynamic Labels State
+let dynamicLabels = [];
+let selectedLabelIndex = -1;
+let isAddingLabel = false;
+
+// Mouse State
+let mousePixelX = 0;
+let mousePixelY = 0;
+let mouseGridX = 0;
+let mouseGridY = 0;
+
 const keys = {
     ArrowUp: false,
     ArrowDown: false,
@@ -18,16 +32,15 @@ const keys = {
     a: false,
     s: false,
     d: false,
-    // Painter keys
     '0': false,
     '1': false,
-    '2': false
+    '2': false,
+    'L': false
 };
 
 const player = {
-    x: 5, // Grid coordinates (32px grid)
+    x: 5,
     y: 5,
-    // Visual pixel position
     pixelX: 5 * TILE_SIZE,
     pixelY: 5 * TILE_SIZE,
     moving: false,
@@ -36,7 +49,7 @@ const player = {
     targetY: 5 * TILE_SIZE
 };
 
-// Map Data 20x20 (16px grid) - Reset to empty for manual painting
+// Map Data 20x20
 const collisionMap = [];
 for (let r = 0; r < ROWS; r++) {
     const row = [];
@@ -45,35 +58,6 @@ for (let r = 0; r < ROWS; r++) {
     }
     collisionMap.push(row);
 }
-
-// Trigger Zones (Doors) - Mapped to 32px grid coords (0-9)
-// These provide the CONTENT for the doors. The '2' on the map provides the TRIGGER location.
-const triggers = [
-    {
-        x: 2, y: 2, // House Top-Left "HOME"
-        type: 'door',
-        label: 'HOME',
-        content: { title: 'Home', text: 'Welcome to your digital home base. Kick off your shoes and relax.' }
-    },
-    {
-        x: 7, y: 2, // House Top-Right "BLOG"
-        type: 'door',
-        label: 'BLOG',
-        content: { title: 'Blog', text: 'Thoughts, updates, and ramblings about code and life.' }
-    },
-    {
-        x: 2, y: 7, // House Bottom-Left "BOOKSHELF"
-        type: 'door',
-        label: 'BOOKSHELF',
-        content: { title: 'Bookshelf', text: 'A collection of my favorite reads and resources.' }
-    },
-    {
-        x: 7, y: 7, // House Bottom-Right "THEME"
-        type: 'door',
-        label: 'THEME',
-        content: { title: 'Themes', text: 'Customize your experience. (Feature coming soon!)' }
-    }
-];
 
 // Assets
 const mapImage = new Image();
@@ -84,69 +68,164 @@ mapImage.onload = () => {
     assetsLoaded = true;
     console.log('Map loaded');
 };
-
-let inputEnabled = true;
-let mouseGridX = 0;
-let mouseGridY = 0;
+if (mapImage.complete) {
+    assetsLoaded = true;
+}
 
 // Input Handling
 window.addEventListener('keydown', (e) => {
-    // Always allow painter keys if debug/dev mode implies it
-    if (['0', '1', '2'].includes(e.key)) {
-        handlePainter(e.key);
+    // Toggle Editor Mode
+    if (e.key === 'E' && e.shiftKey) {
+        toggleEditorMode();
     }
 
-    if (!inputEnabled) return;
-    if (keys.hasOwnProperty(e.key)) {
-        keys[e.key] = true;
+    if (keys.hasOwnProperty(e.key)) keys[e.key] = true;
+
+    // Backspace to Delete Label
+    if (isEditorMode && selectedLabelIndex !== -1 && e.key === 'Backspace') {
+        const removed = dynamicLabels.splice(selectedLabelIndex, 1);
+        console.log("Deleted label:", removed[0].text);
+        selectedLabelIndex = -1;
+    }
+
+    // Painter shortcut keys
+    if (isEditorMode && !isAddingLabel && ['0', '1', '2'].includes(e.key)) {
+        paintTile(e.key);
     }
 });
 
 window.addEventListener('keyup', (e) => {
-    if (keys.hasOwnProperty(e.key)) {
-        keys[e.key] = false;
+    if (keys.hasOwnProperty(e.key)) keys[e.key] = false;
+});
+
+// Click Interaction
+canvas.addEventListener('mousedown', (e) => {
+    if (!isEditorMode) return;
+    updateMousePos(e);
+
+    // 1. Adding Label
+    if (isAddingLabel) {
+        const text = prompt("Enter label text:");
+        if (text) {
+            dynamicLabels.push({
+                text: text,
+                x: mousePixelX,
+                y: mousePixelY
+            });
+            console.log(`Added label: ${text} at ${mousePixelX}, ${mousePixelY}`);
+        }
+        isAddingLabel = false;
+        document.body.style.cursor = 'default';
+        return;
+    }
+
+    // 2. Select existing label (Rough 80x20 box check based on user render strict)
+    let clickedIndex = -1;
+    for (let i = 0; i < dynamicLabels.length; i++) {
+        const lbl = dynamicLabels[i];
+        // Rect: x-40, y-20, w80, h20
+        if (mousePixelX >= lbl.x - 40 && mousePixelX <= lbl.x + 40 &&
+            mousePixelY >= lbl.y - 20 && mousePixelY <= lbl.y) {
+            clickedIndex = i;
+            break;
+        }
+    }
+
+    if (clickedIndex !== -1) {
+        selectedLabelIndex = clickedIndex;
+        console.log("Selected label:", dynamicLabels[clickedIndex].text);
+    } else {
+        selectedLabelIndex = -1;
     }
 });
 
-// Mouse Tracking for Painter
+
+// Mouse Tracking
 canvas.addEventListener('mousemove', (e) => {
+    updateMousePos(e);
+    // Tooltip logic
+    if (isEditorMode) {
+        const tooltip = document.getElementById('dev-tooltip');
+        if (tooltip) {
+            tooltip.style.left = (e.clientX + 15) + 'px';
+            tooltip.style.top = (e.clientY + 15) + 'px';
+            if (isAddingLabel) {
+                tooltip.innerText = "Click to Place Label";
+            } else if (selectedLabelIndex !== -1) {
+                tooltip.innerText = `Selected: ${dynamicLabels[selectedLabelIndex].text}`;
+            } else {
+                tooltip.innerText = `Grid: ${mouseGridX}, ${mouseGridY}`;
+            }
+        }
+    }
+});
+
+// Add Label Button Logic
+const addLabelBtn = document.getElementById('add-label-btn');
+if (addLabelBtn) {
+    addLabelBtn.addEventListener('click', () => {
+        isAddingLabel = true;
+        document.body.style.cursor = 'crosshair';
+        selectedLabelIndex = -1;
+    });
+}
+
+function toggleEditorMode() {
+    isEditorMode = !isEditorMode;
+    document.body.classList.toggle('editor-active', isEditorMode);
+
+    const btn = document.getElementById('add-label-btn');
+    const tooltip = document.getElementById('dev-tooltip');
+
+    if (!isEditorMode) {
+        isAddingLabel = false;
+        selectedLabelIndex = -1;
+        document.body.style.cursor = 'default';
+        if (btn) btn.style.display = 'none';
+        if (tooltip) tooltip.style.display = 'none';
+    } else {
+        if (btn) btn.style.display = 'block';
+        if (tooltip) tooltip.style.display = 'block';
+    }
+    console.log(isEditorMode ? 'Dev Mode Active' : 'Dev Mode Inactive');
+}
+
+function updateMousePos(e) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = rect.width / canvas.width;
     const scaleY = rect.height / canvas.height;
 
-    const x = (e.clientX - rect.left) / scaleX;
-    const y = (e.clientY - rect.top) / scaleY;
+    mousePixelX = (e.clientX - rect.left) / scaleX;
+    mousePixelY = (e.clientY - rect.top) / scaleY;
 
-    mouseGridX = Math.floor(x / COLLISION_TILE_SIZE);
-    mouseGridY = Math.floor(y / COLLISION_TILE_SIZE);
-});
+    mouseGridX = Math.floor(mousePixelX / COLLISION_TILE_SIZE);
+    mouseGridY = Math.floor(mousePixelY / COLLISION_TILE_SIZE);
+}
 
-// Click to toggle (Legacy/Simple painter)
-canvas.addEventListener('mousedown', (e) => {
+function paintTile(valStr) {
     if (mouseGridX >= 0 && mouseGridX < COLS && mouseGridY >= 0 && mouseGridY < ROWS) {
-        // Toggle 1/0
-        // collisionMap[mouseGridY][mouseGridX] = collisionMap[mouseGridY][mouseGridX] === 0 ? 1 : 0;
-        // console.log(`Toggled ${mouseGridX},${mouseGridY} to ${collisionMap[mouseGridY][mouseGridX]}`);
-    }
-});
-
-function handlePainter(key) {
-    if (mouseGridX >= 0 && mouseGridX < COLS && mouseGridY >= 0 && mouseGridY < ROWS) {
-        const val = parseInt(key);
+        const val = parseInt(valStr);
         collisionMap[mouseGridY][mouseGridX] = val;
-        console.log(`Painted ${mouseGridX},${mouseGridY} to ${val}`);
     }
 }
 
-document.getElementById('export-btn').addEventListener('click', () => {
-    console.log("Current Collision Map (20x20):");
-    console.log(JSON.stringify(collisionMap));
-    alert("Map exported to console! (Check F12)");
-});
+// Export Config
+const exportBtn = document.getElementById('export-btn');
+if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+        const config = {
+            collisionMap: collisionMap,
+            dynamicLabels: dynamicLabels
+        };
+        console.log("EXPORT CONFIG:");
+        console.log(JSON.stringify(config, null, 2));
+        alert("Config exported to console.");
+    });
+}
 
-// Game Loop
+
 function update() {
-    if (!inputEnabled) return;
+    if (!inputEnabled || isEditorMode) return;
 
     if (!player.moving) {
         let dx = 0;
@@ -158,18 +237,14 @@ function update() {
         else if (keys.ArrowRight || keys.d) dx = 1;
 
         if (dx !== 0 || dy !== 0) {
-            // Target 32px grid position
             const nextGridX = player.x + dx;
             const nextGridY = player.y + dy;
 
-            // Bounds check (0-9 for 32px tiles)
             if (nextGridX >= 0 && nextGridX < 10 && nextGridY >= 0 && nextGridY < 10) {
-
-                // Check 4 sub-tiles (16px) for BLOCKING logic
+                // Check 4 sub-tiles
                 const cX = nextGridX * 2;
                 const cY = nextGridY * 2;
 
-                // 1 = Blocked
                 const isBlocked =
                     collisionMap[cY][cX] === 1 ||
                     collisionMap[cY][cX + 1] === 1 ||
@@ -188,9 +263,7 @@ function update() {
                     if (dx === -1) player.direction = 'left';
                     if (dx === 1) player.direction = 'right';
 
-                    // Check for Door trigger (Value 2)
-                    // If any of the 4 sub-tiles is 2, trigger!
-                    // Also check triggers array for content
+                    // Check Triggers (Door = 2)
                     const hitDoor =
                         collisionMap[cY][cX] === 2 ||
                         collisionMap[cY][cX + 1] === 2 ||
@@ -198,8 +271,7 @@ function update() {
                         collisionMap[cY + 1][cX + 1] === 2;
 
                     if (hitDoor) {
-                        // Find content matching this 32px tile (roughly)
-                        checkTriggers(nextGridX, nextGridY);
+                        // collision logic
                     }
                 }
             }
@@ -216,85 +288,62 @@ function update() {
     }
 }
 
-function checkTriggers(x, y) {
-    const trigger = triggers.find(t => t.x === x && t.y === y);
-    if (trigger) {
-        console.log('Trigger content found:', trigger);
-        handleTransition(trigger);
-    } else {
-        // Fallback if map has '2' but no content defined
-        console.log('Door hit (2) but no content defined for', x, y);
-        // Optionally handle generic door
-    }
-}
-
-function handleTransition(trigger) {
-    inputEnabled = false;
-    Object.keys(keys).forEach(k => keys[k] = false);
-
-    const overlay = document.getElementById('transition-overlay');
-    const readingWindow = document.getElementById('reading-window');
-    const title = document.getElementById('window-title');
-    const text = document.getElementById('window-text');
-
-    overlay.classList.add('active');
-
-    setTimeout(() => {
-        title.innerText = trigger.content.title;
-        text.innerText = trigger.content.text;
-        readingWindow.classList.add('visible');
-        readingWindow.classList.remove('hidden');
-    }, 500);
-}
-
 document.getElementById('close-btn').addEventListener('click', () => {
     const overlay = document.getElementById('transition-overlay');
     const readingWindow = document.getElementById('reading-window');
-
-    readingWindow.classList.remove('visible');
     readingWindow.classList.add('hidden');
     overlay.classList.remove('active');
-
-    setTimeout(() => {
-        inputEnabled = true;
-    }, 500);
+    inputEnabled = true;
 });
 
-
 function draw() {
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+    // 1. Draw Map
     if (assetsLoaded) {
         ctx.drawImage(mapImage, 0, 0);
+    } else {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    // Draw Player (16x16 Red Box centered in 32x32 tile)
-    // PixelX is top-left of 32px tile.
-    // Center 16px box: +8 offset (32-16)/2 = 8
+    // 2. Dynamic Labels (Requested specific rendering loop)
+    dynamicLabels.forEach((lbl, index) => {
+        // Background
+        ctx.fillStyle = (index === selectedLabelIndex) ? 'rgba(0, 255, 0, 0.6)' : 'rgba(0, 0, 0, 0.6)';
+        // Fixed size box as requested: 80x20, centered X (x-40), bottom anchored Y (y-20)
+        ctx.fillRect(lbl.x - 40, lbl.y - 20, 80, 20);
+
+        ctx.fillStyle = 'white';
+        ctx.font = '10px "Press Start 2P"';
+        ctx.fillText(lbl.text, lbl.x - 35, lbl.y - 5);
+    });
+
+    // 3. Draw Player
     ctx.fillStyle = 'red';
     ctx.fillRect(player.pixelX + 8, player.pixelY + 8, 16, 16);
 
-    // Draw Collision Map (16px grid)
-    for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-            const val = collisionMap[r][c];
-            if (val === 1) {
-                // Blocked - Red
-                ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
-                ctx.fillRect(c * COLLISION_TILE_SIZE, r * COLLISION_TILE_SIZE, COLLISION_TILE_SIZE, COLLISION_TILE_SIZE);
-            } else if (val === 2) {
-                // Door - Blue
-                ctx.fillStyle = 'rgba(0, 0, 255, 0.4)';
-                ctx.fillRect(c * COLLISION_TILE_SIZE, r * COLLISION_TILE_SIZE, COLLISION_TILE_SIZE, COLLISION_TILE_SIZE);
+    // 4. Editor Overlay
+    if (isEditorMode) {
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                const val = collisionMap[r][c];
+                if (val === 1) {
+                    ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
+                    ctx.fillRect(c * COLLISION_TILE_SIZE, r * COLLISION_TILE_SIZE, COLLISION_TILE_SIZE, COLLISION_TILE_SIZE);
+                } else if (val === 2) {
+                    ctx.fillStyle = 'rgba(0, 0, 255, 0.4)';
+                    ctx.fillRect(c * COLLISION_TILE_SIZE, r * COLLISION_TILE_SIZE, COLLISION_TILE_SIZE, COLLISION_TILE_SIZE);
+                    ctx.fillStyle = 'white';
+                    ctx.font = '10px monospace';
+                    ctx.fillText('2', c * COLLISION_TILE_SIZE + 4, r * COLLISION_TILE_SIZE + 12);
+                }
             }
         }
-    }
 
-    // Highlight Mouse Hover (Painter Helper)
-    if (mouseGridX >= 0 && mouseGridX < COLS && mouseGridY >= 0 && mouseGridY < ROWS) {
-        ctx.strokeStyle = 'white';
-        ctx.strokeRect(mouseGridX * COLLISION_TILE_SIZE, mouseGridY * COLLISION_TILE_SIZE, COLLISION_TILE_SIZE, COLLISION_TILE_SIZE);
+        // Highlight Mouse Hover
+        if (mouseGridX >= 0 && mouseGridX < COLS && mouseGridY >= 0 && mouseGridY < ROWS) {
+            ctx.strokeStyle = '#0f0';
+            ctx.strokeRect(mouseGridX * COLLISION_TILE_SIZE, mouseGridY * COLLISION_TILE_SIZE, COLLISION_TILE_SIZE, COLLISION_TILE_SIZE);
+        }
     }
 }
 
