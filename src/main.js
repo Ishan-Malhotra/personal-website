@@ -11,8 +11,22 @@ const COLS = 40;               // 320 / 8
 const MOVEMENT_SPEED = 4;
 
 // Game State
+const PORTALS = [
+    { name: 'Home', url: 'https://ishanmalhotra.bearblog.dev/', coords: [[10, 14], [10, 15], [11, 14], [11, 15]] },
+    { name: 'Blog', url: 'https://ishanmalhotra.bearblog.dev/blog/', coords: [[28, 12], [29, 12], [29, 13], [28, 13]] },
+    { name: 'Theme', url: 'https://ishanmalhotra.bearblog.dev/theme/', coords: [[30, 32], [31, 32], [31, 33], [30, 33]] },
+    { name: 'Bookshelf', url: 'https://ishanmalhotra.bearblog.dev/bookshelf/', coords: [[12, 32], [13, 32], [13, 33], [12, 33]] },
+    { name: 'X', url: 'https://x.com/_ishanmalhotra_', coords: [[0, 20], [0, 21], [0, 22], [0, 23]] },
+    { name: 'Mail', url: 'mailto:ishanmalhotra2004@gmail.com', coords: [[39, 16], [39, 17], [39, 18], [39, 19], [39, 20], [39, 21], [39, 22], [39, 23]] }
+];
+
+// Game State
 let assetsLoaded = false;
 let playerLoaded = false;
+let fadeOpacity = 0;
+let isTransitioning = false;
+let redirectTriggered = false;
+let pendingURL = '';
 
 // Assets
 const mapImage = new Image();
@@ -269,6 +283,20 @@ if (exportBtn) {
 }
 
 function update() {
+    // Cinematic Transition Logic
+    if (isTransitioning) {
+        // Force Walking Up Animation
+        player.direction = 'up';
+        player.frameY = 3;
+
+        // Manual Animation Tick
+        player.tick++;
+        if (player.tick % 8 === 0) {
+            player.frameX = (player.frameX + 1) % 4;
+        }
+        return;
+    }
+
     if (!inputEnabled || isEditorMode) return;
 
     if (!player.moving) {
@@ -313,7 +341,9 @@ function update() {
                     if (dx === 1) player.direction = 'right';
 
                     // Trigger Integration
-                    if (tileVal === 2) {
+                    // Check if tile is 2 OR if it's a Portal Coordinate
+                    const isPortal = PORTALS.some(p => p.coords.some(c => c[0] === nextGridX && c[1] === nextGridY));
+                    if (tileVal === 2 || isPortal) {
                         checkBuildingTrigger(nextGridX, nextGridY);
                     }
                 }
@@ -341,10 +371,29 @@ function update() {
     }
 }
 
-// Trigger Handler Placeholder (to avoid errors)
+// Trigger Handler
+// Trigger Handler
+// Trigger Handler
+// Portals defined at top of file
+const HOME_COORDS = []; // Deprecated, using PORTALS
+
 function checkBuildingTrigger(gx, gy) {
-    console.log(`Trigger activated at ${gx}, ${gy}`);
-    // Future: Add building entry logic here
+    if (isTransitioning) return;
+
+    // Check all portals
+    const portal = PORTALS.find(p =>
+        p.coords.some(coord => coord[0] === gx && coord[1] === gy)
+    );
+
+    if (portal) {
+        console.log(`Triggered Portal: ${portal.name}`);
+        pendingURL = portal.url;
+        isTransitioning = true;
+        inputEnabled = false;
+        redirectTriggered = false;
+    } else {
+        console.log(`Trigger activated at ${gx}, ${gy} (No Portal)`);
+    }
 }
 
 document.getElementById('close-btn').addEventListener('click', () => {
@@ -401,17 +450,8 @@ function draw() {
 
     if (currentSprite && currentSprite.complete) {
         // Center on 8px grid (Scaled to 28x42 as requested)
-        // pixelX - 10 (centers width 28 on 8px tile? 28/2 = 14. 8/2 = 4. 4 - 14 = -10. Yes.)
-        // pixelY - 18 (puts feet at bottom? Height 42. Tile bottom is at +8. 8 - 42 = -34?
-        // User requested "player.pixelY - 18". I will follow request.)
-        //ctx.drawImage(currentSprite, player.pixelX - 10, player.pixelY - 18, 28, 42);
-        ctx.drawImage(
-            currentSprite,
-            player.pixelX - 8,  // dx: Adjust to (player.pixelX - (width / 2) + 4)
-            player.pixelY - 28, // dy: Adjust to (player.pixelY - height + 8)
-            24,                 // dWidth: New width
-            36                  // dHeight: New height
-        );
+        // Fixed dimensions, no scaling animation
+        ctx.drawImage(currentSprite, player.pixelX - 8, player.pixelY - 28, 24, 36);
     }
 
     // 4. Editor Overlay
@@ -436,6 +476,27 @@ function draw() {
         if (mouseGridX >= 0 && mouseGridX < COLS && mouseGridY >= 0 && mouseGridY < ROWS) {
             ctx.strokeStyle = '#0f0';
             ctx.strokeRect(mouseGridX * COLLISION_TILE_SIZE, mouseGridY * COLLISION_TILE_SIZE, COLLISION_TILE_SIZE, COLLISION_TILE_SIZE);
+        }
+    }
+
+    // 5. Cinematic Fade Overlay & Redirect
+    if (isTransitioning) {
+        fadeOpacity += 0.02;
+        ctx.fillStyle = `rgba(0, 0, 0, ${fadeOpacity})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        if (fadeOpacity >= 1 && !redirectTriggered) {
+            redirectTriggered = true;
+            console.log('FINAL REDIRECT TO:', pendingURL);
+            window.open(pendingURL, '_blank');
+
+            // Reset game state after delay so player can continue if they return
+            setTimeout(() => {
+                isTransitioning = false;
+                fadeOpacity = 0;
+                inputEnabled = true;
+                redirectTriggered = false;
+            }, 1000);
         }
     }
 }
