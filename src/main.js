@@ -306,15 +306,24 @@ function draw() {
     }
 
     // 2. Dynamic Labels (Requested specific rendering loop)
+    // 2. Dynamic Labels
     dynamicLabels.forEach((lbl, index) => {
-        // Background
+        // CHANGE 1: THE BOX SIZE
+        // Current: ctx.fillRect(lbl.x - 40, lbl.y - 20, 80, 20);
+        // Try these smaller values (40px wide, 12px tall):
         ctx.fillStyle = (index === selectedLabelIndex) ? 'rgba(0, 255, 0, 0.6)' : 'rgba(0, 0, 0, 0.6)';
-        // Fixed size box as requested: 80x20, centered X (x-40), bottom anchored Y (y-20)
-        ctx.fillRect(lbl.x - 40, lbl.y - 20, 80, 20);
+        ctx.fillRect(lbl.x - 20, lbl.y - 20, 40, 20);
 
+        // CHANGE 2: THE FONT SIZE
+        // Current: ctx.font = '10px "Press Start 2P"';
+        // Try 6px or 8px for a cleaner "GBA" look:
         ctx.fillStyle = 'white';
-        ctx.font = '10px "Press Start 2P"';
-        ctx.fillText(lbl.text, lbl.x - 35, lbl.y - 5);
+        ctx.font = '8px "Press Start 2P"';
+
+        // CHANGE 3: THE TEXT OFFSET
+        // Current: ctx.fillText(lbl.text, lbl.x - 35, lbl.y - 5);
+        // Adjust these to center your text in the smaller box:
+        ctx.fillText(lbl.text, lbl.x - 18, lbl.y - 4);
     });
 
     // 3. Draw Player
