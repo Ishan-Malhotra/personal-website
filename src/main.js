@@ -96,7 +96,8 @@ const keys = {
     '0': false,
     '1': false,
     '2': false,
-    'L': false
+    'L': false,
+    'Enter': false
 };
 
 const player = {
