@@ -11,11 +11,50 @@ const COLS = 40;               // 320 / 8
 const MOVEMENT_SPEED = 4;
 
 // Game State
+let assetsLoaded = false;
+let playerLoaded = false;
+
+// Assets
+const mapImage = new Image();
+mapImage.onload = () => {
+    assetsLoaded = true;
+    console.log('Map loaded');
+};
+mapImage.src = 'assets/map.png';
+
+const playerSprites = {};
+let loadedSpritesCount = 0;
+const totalSprites = 16;
+
+function loadPlayerAssets() {
+    const directions = ['down', 'left', 'right', 'up'];
+    directions.forEach(dir => {
+        for (let i = 0; i < 4; i++) {
+            const key = `${dir}_${i}`;
+            const img = new Image();
+            img.src = `assets/player/${key}.png`;
+            img.onload = () => {
+                loadedSpritesCount++;
+                if (loadedSpritesCount === totalSprites) {
+                    console.log('All 16 Player Sprites Loaded');
+                    playerLoaded = true;
+                }
+            };
+            img.onerror = () => {
+                console.error(`Failed to load sprite: ${key}`);
+            };
+            playerSprites[key] = img;
+        }
+    });
+}
+
+loadPlayerAssets();
+
 let isEditorMode = false;
 let inputEnabled = true;
 
 // Trigger Handler
-// (Trigger Handler removed - duplicate)
+// (Trigger Handler at bottom)
 
 // Dynamic Labels State
 let dynamicLabels = [...MAP_CONFIG.dynamicLabels];
@@ -54,24 +93,17 @@ const player = {
     moving: false,
     direction: 'down',
     targetX: 20 * COLLISION_TILE_SIZE,
-    targetY: 20 * COLLISION_TILE_SIZE
+    targetY: 20 * COLLISION_TILE_SIZE,
+    frameX: 0,
+    frameY: 0,
+    tick: 0
 };
 
 // Map Data
 // Map Data (Moved up)
 
-// Assets
-const mapImage = new Image();
-mapImage.src = 'assets/map.png';
+// (Assets moved to top)
 
-let assetsLoaded = false;
-mapImage.onload = () => {
-    assetsLoaded = true;
-    console.log('Map loaded');
-};
-if (mapImage.complete) {
-    assetsLoaded = true;
-}
 
 // Input Handling
 window.addEventListener('keydown', (e) => {
@@ -249,6 +281,14 @@ function update() {
         else if (keys.ArrowRight || keys.d) dx = 1;
 
         if (dx !== 0 || dy !== 0) {
+            // Update Direction Frame (Rows) - Emerald Order
+            if (dy === 1) player.frameY = 0; // Down
+            if (dx === -1) player.frameY = 1; // Left
+            if (dx === 1) player.frameY = 2; // Right
+            if (dy === -1) player.frameY = 3; // Up
+
+            player.direction = (dy === 1) ? 'down' : (dy === -1) ? 'up' : (dx === -1) ? 'left' : 'right';
+
             const nextGridX = player.x + dx;
             const nextGridY = player.y + dy;
 
@@ -278,8 +318,18 @@ function update() {
                     }
                 }
             }
+        } else {
+            // Idle
+            player.frameX = 0;
+            player.tick = 0;
         }
     } else {
+        // Moving Animation
+        player.tick++;
+        if (player.tick % 8 === 0) {
+            player.frameX = (player.frameX + 1) % 4;
+        }
+
         if (player.pixelX < player.targetX) player.pixelX += MOVEMENT_SPEED;
         if (player.pixelX > player.targetX) player.pixelX -= MOVEMENT_SPEED;
         if (player.pixelY < player.targetY) player.pixelY += MOVEMENT_SPEED;
@@ -306,6 +356,8 @@ document.getElementById('close-btn').addEventListener('click', () => {
 });
 
 function draw() {
+    ctx.imageSmoothingEnabled = false;
+
     // 1. Draw Map
     if (assetsLoaded) {
         ctx.drawImage(mapImage, 0, 0);
@@ -344,8 +396,16 @@ function draw() {
     ctx.textBaseline = 'alphabetic';
 
     // 3. Draw Player
-    ctx.fillStyle = 'red';
-    ctx.fillRect(player.pixelX, player.pixelY, 8, 8);
+    const spriteKey = `${player.direction}_${player.frameX}`;
+    const currentSprite = playerSprites[spriteKey];
+
+    if (currentSprite && currentSprite.complete) {
+        // Center on 8px grid (Scaled to 28x42 as requested)
+        // pixelX - 10 (centers width 28 on 8px tile? 28/2 = 14. 8/2 = 4. 4 - 14 = -10. Yes.)
+        // pixelY - 18 (puts feet at bottom? Height 42. Tile bottom is at +8. 8 - 42 = -34?
+        // User requested "player.pixelY - 18". I will follow request.)
+        ctx.drawImage(currentSprite, player.pixelX - 10, player.pixelY - 18, 28, 42);
+    }
 
     // 4. Editor Overlay
     if (isEditorMode) {
@@ -376,6 +436,10 @@ function draw() {
 function loop() {
     update();
     draw();
+    // Debug Log (User requested for 1 second, but I'll update it to check frame)
+    if (Math.random() < 0.05) { // Log occasionally to avoid spamming too hard, or just log
+        console.log('Current Frame:', player.frameX, 'Direction:', player.direction);
+    }
     requestAnimationFrame(loop);
 }
 
