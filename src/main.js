@@ -404,7 +404,14 @@ function draw() {
         // pixelX - 10 (centers width 28 on 8px tile? 28/2 = 14. 8/2 = 4. 4 - 14 = -10. Yes.)
         // pixelY - 18 (puts feet at bottom? Height 42. Tile bottom is at +8. 8 - 42 = -34?
         // User requested "player.pixelY - 18". I will follow request.)
-        ctx.drawImage(currentSprite, player.pixelX - 10, player.pixelY - 18, 28, 42);
+        //ctx.drawImage(currentSprite, player.pixelX - 10, player.pixelY - 18, 28, 42);
+        ctx.drawImage(
+            currentSprite,
+            player.pixelX - 8,  // dx: Adjust to (player.pixelX - (width / 2) + 4)
+            player.pixelY - 28, // dy: Adjust to (player.pixelY - height + 8)
+            24,                 // dWidth: New width
+            36                  // dHeight: New height
+        );
     }
 
     // 4. Editor Overlay
