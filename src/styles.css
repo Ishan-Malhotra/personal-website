@@ -1,90 +1,16 @@
+/* ═══════════════════════════════════════════
+   SHARED BASE
+   Only handles non-layout elements like
+   transition-overlay and reading-window.
+═══════════════════════════════════════════ */
+
 body {
     margin: 0;
     padding: 0;
-    background-color: #202020;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
     font-family: 'Press Start 2P', cursive;
-    overflow: hidden;
+    background-color: #111118;
 }
 
-#game-container {
-    position: relative;
-    width: 640px;
-    height: 640px;
-    margin-top: 60px;
-    /* Space for editor header */
-    /* 320 * 2 */
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-    background-color: #000;
-}
-
-canvas {
-    display: block;
-    width: 320px;
-    height: 320px;
-    /* Scale logic: canvas is 320px internal, we want it 640px visual */
-    transform: scale(2);
-    transform-origin: top left;
-
-    image-rendering: pixelated;
-    /* Standard */
-    image-rendering: crisp-edges;
-    /* Firefox */
-}
-
-/* Rooftop Labels */
-.rooftop-label {
-    position: absolute;
-    color: white;
-    background-color: rgba(0, 0, 0, 0.6);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 10px;
-    pointer-events: none;
-    /* Let clicks pass through to canvas */
-    text-transform: uppercase;
-    text-shadow: 1px 1px 0 #000;
-    opacity: 0.9;
-    z-index: 10;
-    /* Transformation to make them look like they are floating/attached */
-    transform: translate(-50%, -100%);
-    white-space: nowrap;
-}
-
-/* 
-   Positions are relative to the 640x640 container.
-   A 10x10 grid on 320px texture = 32px tile.
-   Scaled 2x = 64px visual tile.
-   Center tiles are ~ 32px visual per half-tile.
-*/
-/* Top Left House (2, 2) -> Visual X: 2*64 = 128, Y: 2*64 = 128 */
-#label-home {
-    top: 110px;
-    left: 140px;
-}
-
-/* Top Right House (7, 2) -> Visual X: 7*64 = 448, Y: 128 */
-#label-blog {
-    top: 110px;
-    left: 460px;
-}
-
-/* Bottom Left House (2, 7) -> Visual X: 128, Y: 7*64 = 448 */
-#label-bookshelf {
-    top: 430px;
-    left: 140px;
-}
-
-/* Bottom Right House (7, 7) -> Visual X: 448, Y: 448 */
-#label-theme {
-    top: 430px;
-    left: 460px;
-}
-
-/* Transition Overlay */
 #transition-overlay {
     position: absolute;
     top: 0;
@@ -103,7 +29,6 @@ canvas {
     pointer-events: auto;
 }
 
-/* Reading Window (Neo-brutalist style) */
 #reading-window {
     position: fixed;
     top: 50%;
@@ -117,7 +42,6 @@ canvas {
     padding: 2rem;
     z-index: 100;
     display: none;
-    /* Hidden by default */
     text-align: center;
     color: black;
 }
@@ -151,7 +75,6 @@ canvas {
 
 #reading-window p {
     font-family: 'Courier New', Courier, monospace;
-    /* Contrast font */
     font-size: 16px;
     line-height: 1.6;
     font-weight: bold;
@@ -181,7 +104,6 @@ canvas {
     display: none !important;
 }
 
-/* Editor Header */
 #dev-tooltip {
     position: fixed;
     top: 0;
@@ -192,7 +114,6 @@ canvas {
     color: black;
     z-index: 10000;
     display: none;
-    /* Flex when active */
     align-items: center;
     justify-content: center;
     font-family: 'Press Start 2P', cursive;
@@ -204,66 +125,95 @@ body.editor-active #dev-tooltip {
     display: flex;
 }
 
-/* --- Mobile GBA Wrapper --- */
-/* Elements invalid on desktop as they are injected by JS only on mobile */
+.rooftop-label {
+    position: absolute;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 8px;
+    pointer-events: none;
+    text-transform: uppercase;
+    text-shadow: 1px 1px 0 #000;
+    opacity: 0.9;
+    z-index: 10;
+    transform: translate(-50%, -100%);
+    white-space: nowrap;
+}
 
+#desktop-controls-hud {
+    display: none;
+}
+
+
+/* ═══════════════════════════════════════════
+   MOBILE  (≤ 768px)
+   Restore original GBA handheld specifications.
+═══════════════════════════════════════════ */
 @media (max-width: 768px) {
     body {
         background-color: #202020;
-        align-items: flex-start;
-        /* Allow scrolling/positioning from top */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
         padding-top: 20px;
-        height: auto;
         min-height: 100vh;
+        overflow-y: auto;
     }
 
-    /* Reset original container if it wraps the shell */
     #game-container {
-        width: 100% !important;
-        height: auto !important;
-        background: transparent !important;
-        box-shadow: none !important;
-        margin-top: 0 !important;
-        border: none !important;
+        position: relative;
+        width: 100%;
+        height: auto;
         display: flex;
         justify-content: center;
+        background: transparent;
+    }
+
+    canvas {
+        display: block;
+        width: 320px !important;
+        height: 320px !important;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+        background-color: #000;
+        z-index: 1;
     }
 
     .gba-body {
-        /* Indigo Purple with Plastic Curve Gradient */
         background: radial-gradient(circle at 50% 30%, #7d63c4, #634ba1, #4b367c);
         padding: 40px 20px 60px 20px;
+        /* Original padding */
         border-radius: 20px 20px 40px 40px;
-        box-shadow: 0 15px 25px rgba(0, 0, 0, 0.6),
-            inset 0 -5px 10px rgba(0, 0, 0, 0.3),
-            inset 0 2px 5px rgba(255, 255, 255, 0.2);
         display: flex;
         flex-direction: column;
         align-items: center;
         width: 340px;
-        /* Slightly wider than 320px screen */
+        /* Restored to 340px */
+        max-width: 95vw;
         margin: 0 auto;
         border-bottom: 8px solid #3a2a60;
-        /* Darker edge depth */
+        position: relative;
+        box-shadow: 0 15px 25px rgba(0, 0, 0, 0.6);
     }
 
     .screen {
         background-color: #222;
-        /* Dark Gray Bezel */
         padding: 20px 20px 30px 20px;
-        /* Extra bottom padding for logo */
+        /* Original padding */
         border-radius: 10px 10px 30px 10px;
         margin-bottom: 30px;
-        box-shadow: inset 1px 1px 5px rgba(0, 0, 0, 0.8),
-            0 2px 4px rgba(255, 255, 255, 0.1);
         width: 100%;
-        box-sizing: border-box;
         display: flex;
         justify-content: center;
         position: relative;
+        box-sizing: border-box;
+        /* Restored to border-box */
+        overflow: hidden;
+        /* Stop map bleed */
     }
 
-    /* Bezel Logo */
     .screen::after {
         content: 'GAME BOY';
         position: absolute;
@@ -275,48 +225,29 @@ body.editor-active #dev-tooltip {
         font-weight: bold;
         font-style: italic;
         font-size: 10px;
-        color: #666;
+        color: #555;
         letter-spacing: 1px;
         pointer-events: none;
     }
 
-    /* Screen Cover/Gloss (optional, maybe too much?) */
     .screen::before {
         content: '';
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        inset: 0;
         border-radius: 10px 10px 30px 10px;
         box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
         pointer-events: none;
         z-index: 5;
     }
 
-    canvas {
-        width: 320px !important;
-        height: 320px !important;
-        transform: none !important;
-        /* Remove 2x scale on mobile to fit */
-        border: 2px solid #000;
-        background-color: #000;
-        z-index: 1;
-        /* Below gloss */
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-    }
-
-    /* Controls */
     .controls {
         display: flex;
         width: 100%;
         justify-content: space-between;
         align-items: center;
         padding: 0 10px;
-        box-sizing: border-box;
     }
 
-    /* D-PAD */
     .d-pad {
         position: relative;
         width: 110px;
@@ -328,16 +259,33 @@ body.editor-active #dev-tooltip {
         width: 36px;
         height: 36px;
         background: #2a2a2a;
-        /* Matte Black */
         border: none;
         outline: none;
         cursor: pointer;
-        /* Subtle texture/gradient */
         background-image: radial-gradient(circle, #333 10%, #222 90%);
-        box-shadow:
-            inset 1px 1px 2px rgba(255, 255, 255, 0.1),
-            2px 2px 4px rgba(0, 0, 0, 0.4);
         touch-action: manipulation;
+        color: rgba(255, 255, 255, 0.35);
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    .d-btn.up::after {
+        content: '▲';
+    }
+
+    .d-btn.down::after {
+        content: '▼';
+    }
+
+    .d-btn.left::after {
+        content: '◀';
+    }
+
+    .d-btn.right::after {
+        content: '▶';
     }
 
     .d-btn.up {
@@ -368,7 +316,6 @@ body.editor-active #dev-tooltip {
         width: 38px;
     }
 
-    /* Center piece to hide seams */
     .d-center {
         position: absolute;
         top: 37px;
@@ -376,30 +323,21 @@ body.editor-active #dev-tooltip {
         width: 36px;
         height: 36px;
         background: #2a2a2a;
-        background-image: radial-gradient(circle, #252525 20%, #2a2a2a 30%);
-        /* Dimple */
         z-index: 2;
     }
 
-    /* Active States - Haptic Visual */
     .d-btn:active,
     .d-btn.active {
-        box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.6);
-        /* Deep press */
+        box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.8);
         transform: translate(1px, 1px);
-        background: #202020;
     }
 
-    /* Action Pad */
     .action-pad {
         display: flex;
         align-items: center;
         justify-content: center;
         width: 100px;
-        /* A & B space, though current is just A */
         height: 100px;
-        position: relative;
-        /* We only have A, so center it roughly */
     }
 
     .a-btn {
@@ -407,46 +345,104 @@ body.editor-active #dev-tooltip {
         height: 50px;
         border-radius: 50%;
         background-color: #e02020;
-        /* Deep Red Base */
-        /* Glossy Dome Gradient */
         background-image: radial-gradient(circle at 30% 30%, #ff6b6b, #d01010 60%, #8a0b0b);
         border: none;
-        color: rgba(0, 0, 0, 0.4);
+        color: rgba(255, 255, 255, 0.55);
         font-weight: bold;
-        font-family: sans-serif;
-        font-size: 14px;
-        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.2);
-
-        box-shadow:
-            0 3px 5px rgba(0, 0, 0, 0.4),
-            /* Drop shadow */
-            inset 0 2px 5px rgba(255, 255, 255, 0.3);
-        /* Top highlight */
-
         cursor: pointer;
-        touch-action: manipulation;
         display: flex;
         justify-content: center;
         align-items: center;
-        margin-top: -10px;
-        /* Offset like GBA A button */
-        margin-right: -10px;
+        box-shadow: 0 3px 5px rgba(0, 0, 0, 0.4);
     }
-
-
 
     .a-btn:active,
     .a-btn.active {
-        box-shadow:
-            0 1px 2px rgba(0, 0, 0, 0.4),
-            inset 0 3px 8px rgba(0, 0, 0, 0.6);
-        /* Pressed inner shadow */
+        box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.6);
         transform: translateY(2px);
     }
+}
 
-    /* Labels Adjustment */
-    .rooftop-label {
-        font-size: 8px;
-        /* Slightly smaller on mobile */
+
+/* ═══════════════════════════════════════════
+   DESKTOP (≥ 769px) ISO
+═══════════════════════════════════════════ */
+@media (min-width: 769px) {
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        background-color: #111118;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
+        gap: 16px;
+    }
+
+    #game-container {
+        position: relative;
+        width: 640px;
+        height: 640px;
+        background-color: #000;
+        flex-shrink: 0;
+        box-shadow:
+            0 0 0 2px #1e1e2e,
+            0 0 60px rgba(0, 0, 0, 0.7);
+        border-radius: 2px;
+    }
+
+    canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+    }
+
+    #desktop-controls-hud {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        width: fit-content;
+        padding: 12px 32px;
+        background: rgba(26, 26, 26, 0.9);
+        color: #ffffff;
+        border-radius: 8px;
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        white-space: nowrap;
+        margin-top: 20px;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    #desktop-controls-hud .sub-text {
+        opacity: 0.7;
+    }
+
+    #desktop-controls-hud .sub-text::before {
+        content: "•";
+        margin-right: 16px;
+    }
+}
+
+/* Taller screens */
+@media (min-width: 769px) and (min-height: 920px) {
+    #game-container {
+        width: 800px;
+        height: 800px;
+    }
+}
+
+@media (min-width: 769px) and (min-height: 1080px) {
+    #game-container {
+        width: 960px;
+        height: 960px;
     }
 }
