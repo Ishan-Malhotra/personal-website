@@ -8,7 +8,7 @@ const TILE_SIZE = 32;
 const COLLISION_TILE_SIZE = 8; // Updated to 8px
 const ROWS = 40;               // 320 / 8
 const COLS = 40;               // 320 / 8
-const MOVEMENT_SPEED = 4;
+const MOVEMENT_SPEED = 6;
 
 // Game State
 const PORTALS = [
@@ -361,10 +361,10 @@ function update() {
             player.frameX = (player.frameX + 1) % 4;
         }
 
-        if (player.pixelX < player.targetX) player.pixelX += MOVEMENT_SPEED;
-        if (player.pixelX > player.targetX) player.pixelX -= MOVEMENT_SPEED;
-        if (player.pixelY < player.targetY) player.pixelY += MOVEMENT_SPEED;
-        if (player.pixelY > player.targetY) player.pixelY -= MOVEMENT_SPEED;
+        if (player.pixelX < player.targetX) player.pixelX = Math.min(player.pixelX + MOVEMENT_SPEED, player.targetX);
+        if (player.pixelX > player.targetX) player.pixelX = Math.max(player.pixelX - MOVEMENT_SPEED, player.targetX);
+        if (player.pixelY < player.targetY) player.pixelY = Math.min(player.pixelY + MOVEMENT_SPEED, player.targetY);
+        if (player.pixelY > player.targetY) player.pixelY = Math.max(player.pixelY - MOVEMENT_SPEED, player.targetY);
 
         if (player.pixelX === player.targetX && player.pixelY === player.targetY) {
             player.moving = false;
@@ -489,7 +489,7 @@ function draw() {
         if (fadeOpacity >= 1 && !redirectTriggered) {
             redirectTriggered = true;
             console.log('FINAL REDIRECT TO:', pendingURL);
-            window.open(pendingURL, '_blank');
+            window.location.href = pendingURL;
 
             // Reset game state after delay so player can continue if they return
             setTimeout(() => {
