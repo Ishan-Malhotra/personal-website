@@ -230,6 +230,72 @@
             transform: scale(1.05);
         }
 
+        /* --- LIGHTBOX (ZOOM) STATES --- */
+        #zoom-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: black;
+            opacity: 0;
+            pointer-events: none;
+            /* Ignore clicks natively */
+            z-index: 50;
+            /* Above wallpaper and map, beneath game-container */
+            transition: opacity 0.3s ease;
+        }
+
+        /* Triggered dynamically by gallery.js */
+        body.zoomed-in #zoom-overlay {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        body.zoomed-in .polaroid-frame {
+            overflow: visible;
+            /* Let the expanded image burst out! */
+            background: transparent;
+            box-shadow: none;
+        }
+
+        body.zoomed-in .caption-container,
+        body.zoomed-in #thumbnail-nav,
+        body.zoomed-in #back-btn,
+        body.zoomed-in #desktop-controls-hud {
+            opacity: 0 !important;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        body.zoomed-in #game-container {
+            z-index: 150;
+            /* Bring it above the zoom overlay */
+            position: relative;
+        }
+
+        .photo-slide img {
+            border: 1px solid #f0f0f0;
+            background: linear-gradient(180deg, #0d0d0d 0%, #1c1510 100%);
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            transform-origin: center center;
+        }
+
+        /* When actively manipulating via multi-touch, kill transition lag */
+        .photo-slide img.dragging {
+            transition: none !important;
+        }
+
+        body.zoomed-in .photo-slide img {
+            border: none;
+            /* Remove polaroid print border on zoom */
+        }
+
         @media (max-width: 768px) {
             body {
                 height: 100dvh;
@@ -297,7 +363,7 @@
 
             .photo-slide img {
                 border: 1px solid #f0f0f0;
-                background: transparent;
+                background: linear-gradient(180deg, #0d0d0d 0%, #1c1510 100%);
                 width: 100%;
                 height: 100%;
                 object-fit: contain;
@@ -346,6 +412,9 @@
 </head>
 
 <body>
+    <!-- Fullscreen Lightbox Backdrop -->
+    <div id="zoom-overlay"></div>
+
     <button id="back-btn">← BACK [ESC]</button>
 
     <div id="thumbnail-nav"></div>

@@ -114,68 +114,217 @@ document.addEventListener('DOMContentLoaded', async () => {
         navigateTo(newIndex);
     }
 
-    // --- Touch & Drag Handlers ---
-    function getPositionX(event) {
-        return event.type.includes('mouse') ? event.clientX : event.touches[0].clientX;
+    // --- Touch, Pan & Zoom Engine ---
+    let lastTapTime = 0;
+    let isZoomed = false;
+    let zoomLevel = 1;
+    let panX = 0, panY = 0;
+    let lastPanX = 0, lastPanY = 0;
+
+    // Pinch variables
+    let initialPinchDistance = null;
+    let baseZoomLevel = 1;
+    let startY = 0;
+
+    function resetZoom() {
+        isZoomed = false;
+        zoomLevel = 1;
+        panX = 0; panY = 0;
+        lastPanX = 0; lastPanY = 0;
+        document.body.classList.remove('zoomed-in');
+
+        const currentImg = document.querySelectorAll('.photo-slide img')[currentIndex];
+        if (currentImg) {
+            currentImg.style.transform = `translate(0px, 0px) scale(1)`;
+            currentImg.classList.remove('dragging');
+        }
     }
 
+    function toggleZoom() {
+        if (isZoomed) {
+            resetZoom();
+        } else {
+            isZoomed = true;
+            zoomLevel = 2; // Default tap zoom level
+            panX = 0; panY = 0;
+            document.body.classList.add('zoomed-in');
+
+            const currentImg = document.querySelectorAll('.photo-slide img')[currentIndex];
+            if (currentImg) {
+                currentImg.style.transform = `translate(0px, 0px) scale(2)`;
+            }
+        }
+    }
+
+    function getDistance(touches) {
+        return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+    }
+
+    function getPositionX(event) { return event.type.includes('mouse') ? event.clientX : event.touches[0].clientX; }
+    function getPositionY(event) { return event.type.includes('mouse') ? event.clientY : event.touches[0].clientY; }
+
     function touchStart(event) {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTapTime;
+
+        // Double tap or Single tap (we'll map single click on the image directly to toggle if zoomed in later, but standard double-tap is universal)
+        if (tapLength < 300 && tapLength > 0 && event.touches && event.touches.length === 1) {
+            toggleZoom();
+            event.preventDefault();
+        }
+        lastTapTime = currentTime;
+
+        // Pinch to Zoom init
+        if (event.touches && event.touches.length === 2) {
+            isDragging = false; // kill swipe
+            initialPinchDistance = getDistance(event.touches);
+            baseZoomLevel = zoomLevel;
+
+            const currentImg = document.querySelectorAll('.photo-slide img')[currentIndex];
+            if (currentImg) currentImg.classList.add('dragging');
+
+            // Native polaroid enters zoom state immediately
+            document.body.classList.add('zoomed-in');
+            isZoomed = true;
+            return;
+        }
+
+        // Standard 1 finger interaction
         isDragging = true;
         startX = getPositionX(event);
+        startY = getPositionY(event);
         polaroidFrame.style.cursor = 'grabbing';
-        updateTrackPosition(false); // remove transition instantly
+
+        if (isZoomed) {
+            // Initiate Pan
+            lastPanX = panX;
+            lastPanY = panY;
+            const currentImg = document.querySelectorAll('.photo-slide img')[currentIndex];
+            if (currentImg) currentImg.classList.add('dragging');
+        } else {
+            // Initiate Swipe
+            updateTrackPosition(false);
+        }
+    }
+
+    function clampPan(val, maxRange) {
+        if (val > maxRange) return maxRange;
+        if (val < -maxRange) return -maxRange;
+        return val;
     }
 
     function touchMove(event) {
-        if (!isDragging) return;
-        const currentPosition = getPositionX(event);
-        currentTranslate = currentPosition - startX;
+        if (event.touches && event.touches.length === 2) {
+            // Handle Pinch
+            const currentDistance = getDistance(event.touches);
+            const scaleFactor = currentDistance / initialPinchDistance;
+            zoomLevel = Math.max(0.5, baseZoomLevel * scaleFactor); // Limit min pinch out
 
-        // Add resistance at the start and end of the roll
-        if (currentIndex === 0 && currentTranslate > 0) {
-            currentTranslate *= 0.3;
-        } else if (currentIndex === photos.length - 1 && currentTranslate < 0) {
-            currentTranslate *= 0.3;
+            const currentImg = document.querySelectorAll('.photo-slide img')[currentIndex];
+            if (currentImg) {
+                currentImg.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
+            }
+            return;
         }
 
-        updateTrackPosition(false);
+        if (!isDragging) return;
+
+        const currentX = getPositionX(event);
+        const currentY = getPositionY(event);
+
+        if (isZoomed) {
+            // Handle Panning
+            const dx = currentX - startX;
+            const dy = currentY - startY;
+
+            // Swipe down to dismiss gesture detection (only if zoomed out far or pan at top edge)
+            if (dy > 100 && zoomLevel <= 1.5 && Math.abs(dx) < 50) {
+                resetZoom();
+                isDragging = false;
+                return;
+            }
+
+            // Calculate basic panning constraint based on zoom level
+            const maxPan = (zoomLevel - 1) * 200; // rough heuristic constraint
+            if (maxPan > 0) {
+                panX = clampPan(lastPanX + dx, maxPan);
+                panY = clampPan(lastPanY + dy, maxPan);
+            }
+
+            const currentImg = document.querySelectorAll('.photo-slide img')[currentIndex];
+            if (currentImg) {
+                currentImg.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
+            }
+        } else {
+            // Handle Gallery Swipe
+            currentTranslate = currentX - startX;
+            if (currentIndex === 0 && currentTranslate > 0) currentTranslate *= 0.3;
+            else if (currentIndex === photos.length - 1 && currentTranslate < 0) currentTranslate *= 0.3;
+            updateTrackPosition(false);
+        }
     }
 
-    function touchEnd() {
+    function touchEnd(event) {
+        // Pinch end logic
+        if (isZoomed && event.touches && event.touches.length === 0) {
+            const currentImg = document.querySelectorAll('.photo-slide img')[currentIndex];
+            if (currentImg) currentImg.classList.remove('dragging');
+
+            if (zoomLevel < 1) {
+                // Snap back to normal
+                resetZoom();
+                return;
+            }
+
+            // Keep zoomed, lock in new pan
+            lastPanX = panX;
+            lastPanY = panY;
+            isDragging = false;
+            return;
+        }
+
         if (!isDragging) return;
         isDragging = false;
         polaroidFrame.style.cursor = 'grab';
 
-        const threshold = polaroidFrame.clientWidth * 0.15; // 15% to trigger
-
-        if (currentTranslate < -threshold) {
-            navigateFixed('next');
-        } else if (currentTranslate > threshold) {
-            navigateFixed('prev');
-        } else {
-            currentTranslate = 0;
-            updateTrackPosition(true); // Snap back to nearest photo
+        if (!isZoomed) {
+            const threshold = polaroidFrame.clientWidth * 0.15;
+            if (currentTranslate < -threshold) navigateFixed('next');
+            else if (currentTranslate > threshold) navigateFixed('prev');
+            else {
+                currentTranslate = 0;
+                updateTrackPosition(true);
+            }
         }
     }
 
-    // Mouse events
-    polaroidFrame.addEventListener('mousedown', touchStart);
+    // Attach interaction to Track instead of Frame so clicks map correctly
+    photoTrack.addEventListener('mousedown', touchStart);
     window.addEventListener('mouseup', touchEnd);
     window.addEventListener('mousemove', touchMove);
 
-    // Touch events
-    polaroidFrame.addEventListener('touchstart', touchStart);
-    polaroidFrame.addEventListener('touchend', touchEnd);
-    polaroidFrame.addEventListener('touchmove', touchMove);
+    photoTrack.addEventListener('touchstart', touchStart, { passive: false });
+    photoTrack.addEventListener('touchend', touchEnd);
+    photoTrack.addEventListener('touchmove', touchMove, { passive: false });
+
+    // Single click/tap toggles zoom if active
+    photoTrack.addEventListener('click', (e) => {
+        if (!isZoomed) return;
+        // Allows single tap to close zoom on desktop/mobile if already zoomed
+        if (!e.target.closest('.thumbnail')) resetZoom();
+    });
 
     // Keyboard Listeners
     window.addEventListener('keydown', (e) => {
         if (['ArrowRight', 'd', 's'].includes(e.key)) {
+            if (isZoomed) resetZoom();
             navigateFixed('next');
         } else if (['ArrowLeft', 'a', 'w'].includes(e.key)) {
+            if (isZoomed) resetZoom();
             navigateFixed('prev');
         } else if (e.key === 'Escape') {
-            window.location.href = 'index.html';
+            if (isZoomed) resetZoom();
+            else window.location.href = 'index.html';
         }
     });
 
