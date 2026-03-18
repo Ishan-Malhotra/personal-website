@@ -17,9 +17,47 @@ A personal website presented as a fully interactive GBA-style RPG overworld. Thi
 *   `src/main.js`: The core game engine. Handles the game loop, input, player logic, and rendering.
 *   `src/mapData.js`: A data file storing the `MAP_CONFIG`, including the 2D collision array and dynamic label data.
 *   `src/styles.css`: GBA-style UI styling for the container and overlays.
+*   `src/mobileAdapter.js`: Mobile-only Game Boy shell + on-screen controls injection (D-pad + A button + Spotify panel container).
 *   `gallery.html` / `gallery.js`: Standalone cinematic photo viewer with native swipe physics.
 *   `galleryData.json`: Data source for populating the Gallery.
 *   `assets/`: Stores game resources (`map.png`, player sprites).
+
+---
+
+## 📱 Mobile Game Boy UI + Spotify
+
+On mobile (`≤ 768px`) the canvas is wrapped in a CSS Game Boy shell with touch controls. Spotify is integrated into the Game Boy body (not a floating overlay on mobile).
+
+### Controls Layout (Mobile)
+*   **D-pad + A button**: Rendered in the top controller row (`src/mobileAdapter.js`, styled in `src/styles.css`).
+*   **Spotify panel**: Renders as a compact iframe below the controls row and is **hidden by default**. It uses a slide/reveal animation via `.spotify-hidden` CSS toggling.
+
+### Spotify Visibility Logic (Mobile + Desktop)
+Spotify visibility is driven by a shared, explicit tile whitelist (`SPOTIFY_ZONE`) in `src/main.js`:
+*   **Mobile**: toggles the embedded panel inside the Game Boy shell.
+*   **Desktop**: toggles the floating popup card (`#music-player-popup` in `index.html`).
+
+The panel/popup is shown when the player is standing on any of these tiles:
+
+```javascript
+[
+  {x:20,y:17},{x:21,y:17},
+  {x:20,y:18},{x:21,y:18},
+  {x:20,y:19},{x:21,y:19},
+  {x:20,y:20},{x:21,y:20},
+  {x:20,y:21},{x:21,y:21},
+  {x:22,y:20},{x:22,y:21},
+  {x:23,y:20},{x:23,y:21},
+  {x:24,y:20},{x:25,y:20},
+  {x:24,y:21},{x:25,y:21},
+  {x:24,y:16},{x:24,y:17},{x:24,y:18},{x:24,y:19},
+  {x:25,y:16},{x:25,y:17},{x:25,y:18},{x:25,y:19}
+]
+```
+
+### Spawnpoint
+The player spawnpoint is set in `src/main.js`:
+*   **Grid spawn**: `(20, 11)`
 
 ---
 
