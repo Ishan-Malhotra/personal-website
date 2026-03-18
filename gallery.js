@@ -16,6 +16,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const response = await fetch('./galleryData.json');
         photos = await response.json();
+
+        // Shuffle photos using Fisher-Yates
+        for (let i = photos.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [photos[i], photos[j]] = [photos[j], photos[i]];
+        }
+
         if (photos.length > 0) {
             generateThumbnails();
             generateSlides();

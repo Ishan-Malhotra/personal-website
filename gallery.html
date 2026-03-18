@@ -128,17 +128,31 @@
         /* Thumbnail Navigation (Film Reel) */
         #thumbnail-nav {
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: flex-start;
+            /* Fixes left-side cutoff flexbox bug when overflowing */
             gap: 12px;
             margin: 0 auto;
             padding: 16px 20px;
             background: var(--charcoal);
             width: fit-content;
+            max-width: 90vw;
+            overflow-x: auto;
             position: relative;
             z-index: 10;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            /* Match depth so it feels cohesive */
+            border-radius: 4px;
+            /* Soften edges if it spans */
+        }
+
+        /* Subtle scrollbar for desktop overflow */
+        #thumbnail-nav::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        #thumbnail-nav::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
         }
 
         #thumbnail-nav::before,
@@ -313,7 +327,8 @@
                 max-width: 90vw;
                 box-sizing: border-box;
                 border-radius: 4px 4px 0 0;
-                justify-content: center;
+                justify-content: flex-start;
+                /* CRITICAL FIX: Stops flexbox from clipping left edges when overflowing */
                 overflow-x: auto;
                 padding: 14px 16px;
                 margin: 0;
