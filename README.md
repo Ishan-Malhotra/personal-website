@@ -17,6 +17,8 @@ A personal website presented as a fully interactive GBA-style RPG overworld. Thi
 *   `src/main.js`: The core game engine. Handles the game loop, input, player logic, and rendering.
 *   `src/mapData.js`: A data file storing the `MAP_CONFIG`, including the 2D collision array and dynamic label data.
 *   `src/styles.css`: GBA-style UI styling for the container and overlays.
+*   `gallery.html` / `gallery.js`: Standalone cinematic photo viewer with native swipe physics.
+*   `galleryData.json`: Data source for populating the Gallery.
 *   `assets/`: Stores game resources (`map.png`, player sprites).
 
 ---
@@ -41,6 +43,19 @@ Floating labels (e.g., "Projects", "About Me") can be managed dynamically:
 *   **Add**: Click the **"Add Label"** button (top-left) -> Click map -> Enter text.
 *   **Delete**: Click an existing label to select it (turns green) -> Press **Backspace**.
 *   **Export**: Click **"Export Config"** (bottom-right) to dump the new configuration (Collision + Labels) to the console as JSON.
+
+---
+
+## 📸 Cinematic Photo Gallery
+
+The website includes a dedicated, highly-polished **Photo Gallery** accessible via the top map boundary (grid coordinates `(16..23, 0)`).
+
+### Features
+*   **Polaroid Aesthetic**: Photos are rendered inside a clean, high-fidelity Polaroid frame over the Pokémon wallpaper.
+*   **35mm Film Reel**: A dark, repeating gradient generates realistic film sprocket holes for the thumbnail navigation bar.
+*   **Native Swipe Physics**: A bespoke sliding engine (`gallery.js`) allows users to physically drag the Polaroid card horizontally. It features momentum-based logic, `cubic-bezier` spring/bounce easing, and automatic frame snapping.
+*   **Continuous Inner Track**: The transition handles all photos inside a `flex` track wrapped by a rigidly fixed, `overflow: hidden` frame context. This creates a seamless "film advancing" visual effect where the photos stay connected side-by-side. 
+*   **Data-Driven (`galleryData.json`)**: Loading arbitrary imagery, captions, and dates dynamically via a JSON fetch map.
 
 ---
 

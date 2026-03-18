@@ -1,6 +1,4 @@
-export const MAP_CONFIG =
-
-{
+export const MAP_CONFIG = {
     "collisionMap": [
         [
             1,
@@ -1713,6 +1711,11 @@ export const MAP_CONFIG =
             "text": "Mail",
             "x": 298,
             "y": 171.5
+        },
+        {
+            "text": "Gallery",
+            "x": 157.46835443037975,
+            "y": 22.35363924050633
         }
     ]
-}
+};

@@ -17,7 +17,8 @@ const PORTALS = [
     { name: 'Theme', url: 'https://ishanmalhotra.bearblog.dev/theme/', coords: [[30, 32], [31, 32], [31, 33], [30, 33]] },
     { name: 'Bookshelf', url: 'https://ishanmalhotra.bearblog.dev/bookshelf/', coords: [[12, 32], [13, 32], [13, 33], [12, 33]] },
     { name: 'X', url: 'https://x.com/_ishanmalhotra_', coords: [[0, 20], [0, 21], [0, 22], [0, 23]] },
-    { name: 'Mail', url: 'mailto:ishanmalhotra2004@gmail.com', coords: [[39, 16], [39, 17], [39, 18], [39, 19], [39, 20], [39, 21], [39, 22], [39, 23]] }
+    { name: 'Mail', url: 'mailto:ishanmalhotra2004@gmail.com', coords: [[39, 16], [39, 17], [39, 18], [39, 19], [39, 20], [39, 21], [39, 22], [39, 23]] },
+    { name: 'Gallery', url: 'gallery.html', coords: [[16, 0], [17, 0], [18, 0], [19, 0], [20, 0], [21, 0], [22, 0], [23, 0]] }
 ];
 
 // Game State
