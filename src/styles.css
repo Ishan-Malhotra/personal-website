@@ -189,7 +189,7 @@ body.editor-active #dev-tooltip {
 
     .gba-body {
         background: radial-gradient(circle at 50% 30%, #7d63c4, #634ba1, #4b367c);
-        padding: 40px 20px 60px 20px;
+        padding: 40px 12px 44px 12px;
         /* Original padding */
         border-radius: 20px 20px 40px 40px;
         display: flex;
@@ -201,6 +201,7 @@ body.editor-active #dev-tooltip {
         margin: 0 auto;
         border-bottom: 8px solid #3a2a60;
         position: relative;
+        overflow: hidden;
         box-shadow: 0 15px 25px rgba(0, 0, 0, 0.6);
     }
 
@@ -248,16 +249,27 @@ body.editor-active #dev-tooltip {
 
     .controls {
         display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        gap: 12px;
         width: 100%;
-        justify-content: space-between;
+        padding: 0;
+    }
+
+    .controls-top {
+        display: flex;
         align-items: center;
-        padding: 0 10px;
+        justify-content: space-between;
+        width: 100%;
+        padding: 0 36px 0 24px;
     }
 
     .d-pad {
         position: relative;
         width: 110px;
         height: 110px;
+        flex: 0 0 auto;
     }
 
     .d-btn {
@@ -342,8 +354,10 @@ body.editor-active #dev-tooltip {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 100px;
-        height: 100px;
+        width: 110px;
+        height: 110px;
+        flex: 0 0 110px;
+        transform: translateX(-10px);
     }
 
     .a-btn {
@@ -360,12 +374,54 @@ body.editor-active #dev-tooltip {
         justify-content: center;
         align-items: center;
         box-shadow: 0 3px 5px rgba(0, 0, 0, 0.4);
+        touch-action: manipulation;
     }
 
     .a-btn:active,
     .a-btn.active {
         box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.6);
         transform: translateY(2px);
+    }
+
+    .spotify-pad {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        width: calc(100% - 32px);
+        margin: 0 16px;
+        height: 80px;
+        align-self: stretch;
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.35);
+        box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.25);
+        transform: translateY(8px);
+        opacity: 0;
+        max-height: 0;
+        transition: max-height 180ms steps(6, end), opacity 120ms linear, transform 180ms steps(6, end);
+    }
+
+    .spotify-embed-frame-mobile {
+        display: block;
+        width: 100% !important;
+        height: 80px !important;
+        max-height: 80px !important;
+        border: 0 !important;
+    }
+
+    .spotify-pad.spotify-hidden {
+        display: flex; /* keep in flow so the animation can expand height */
+        max-height: 0;
+        opacity: 0;
+        transform: translateY(8px);
+        pointer-events: none;
+    }
+
+    .spotify-pad:not(.spotify-hidden) {
+        max-height: 80px;
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
     }
 }
 

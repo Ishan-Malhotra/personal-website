@@ -37,6 +37,9 @@ mapImage.onload = () => {
 };
 mapImage.src = 'assets/map.png';
 
+const radioImage = new Image();
+radioImage.src = 'assets/boombox.png';
+
 const playerSprites = {};
 let loadedSpritesCount = 0;
 const totalSprites = 16;
@@ -98,18 +101,62 @@ const keys = {
     '1': false,
     '2': false,
     'L': false,
-    'Enter': false
+    'Enter': false,
+    ' ': false,
+    'e': false,
+    'E': false
 };
+
+// Radio UI State
+let showRadioSpeechBubble = false;
+let radioSpeechTimeout = null;
+
+// Exact "Spotify visible" zone tiles (grid coordinates)
+const SPOTIFY_ZONE = [
+    { x: 20, y: 17 }, { x: 21, y: 17 },
+    { x: 20, y: 18 }, { x: 21, y: 18 },
+    { x: 20, y: 19 }, { x: 21, y: 19 },
+    { x: 20, y: 20 }, { x: 21, y: 20 },
+    { x: 20, y: 21 }, { x: 21, y: 21 },
+    { x: 22, y: 20 }, { x: 22, y: 21 },
+    { x: 23, y: 20 }, { x: 23, y: 21 },
+    { x: 24, y: 20 }, { x: 25, y: 20 },
+    { x: 24, y: 21 }, { x: 25, y: 21 },
+    { x: 24, y: 16 }, { x: 24, y: 17 }, { x: 24, y: 18 }, { x: 24, y: 19 },
+    { x: 25, y: 16 }, { x: 25, y: 17 }, { x: 25, y: 18 }, { x: 25, y: 19 }
+];
+
+const isInSpotifyZone = (gx, gy) => SPOTIFY_ZONE.some(t => t.x === gx && t.y === gy);
+
+// ── Floating ♪ note particles above boombox ──
+const noteParticles = [];
+let noteSpawnTimer = 0;
+const NOTE_CHARS = ['♪', '♩', '♫'];
+
+function spawnNote() {
+    // Boombox centre in canvas pixels (24x24 sprite at 172,140)
+    noteParticles.push({
+        x: 172 + 8 + (Math.random() - 0.5) * 10, // spread across sprite width
+        y: 140,
+        char: NOTE_CHARS[Math.floor(Math.random() * NOTE_CHARS.length)],
+        alpha: 1,
+        vy: -(0.4 + Math.random() * 0.4),   // drift upward
+        vx: (Math.random() - 0.5) * 0.3,    // slight horizontal wobble
+        size: 5 + Math.random() * 3,
+        life: 1,
+        decay: 0.012 + Math.random() * 0.008
+    });
+}
 
 const player = {
     x: 20,
-    y: 20,
+    y: 11,
     pixelX: 20 * COLLISION_TILE_SIZE,
-    pixelY: 20 * COLLISION_TILE_SIZE,
+    pixelY: 11 * COLLISION_TILE_SIZE,
     moving: false,
     direction: 'down',
     targetX: 20 * COLLISION_TILE_SIZE,
-    targetY: 20 * COLLISION_TILE_SIZE,
+    targetY: 11 * COLLISION_TILE_SIZE,
     frameX: 0,
     frameY: 0,
     tick: 0
@@ -140,6 +187,17 @@ window.addEventListener('keydown', (e) => {
     // Painter shortcut keys
     if (isEditorMode && !isAddingLabel && ['0', '1', '2'].includes(e.key)) {
         paintTile(e.key);
+    }
+});
+
+// Bind Music Close Button once window is loaded
+window.addEventListener('DOMContentLoaded', () => {
+    const closeMusic = document.getElementById('close-music-btn');
+    if (closeMusic) {
+        closeMusic.addEventListener('click', () => {
+            document.getElementById('music-player-popup').classList.add('hidden');
+            showRadioSpeechBubble = false; // Hide bubble if player manual closed immediately
+        });
     }
 });
 
@@ -301,6 +359,58 @@ function update() {
 
     if (!inputEnabled || isEditorMode) return;
 
+    // ── Mobile-only: show/hide embedded Spotify panel near boombox ──
+    // Radio/boombox footprint tiles (grid coordinates)
+    const RADIO_FOOTPRINT = [
+        [21, 18], [21, 19], [21, 20],
+        [22, 20], [23, 20], [24, 20],
+        [24, 19], [24, 18],
+        [23, 18], [22, 18]
+    ];
+
+    const manhattan = (ax, ay, bx, by) => Math.abs(ax - bx) + Math.abs(ay - by);
+    const minDistanceToRadio = (gx, gy) => {
+        let min = Infinity;
+        for (const [rx, ry] of RADIO_FOOTPRINT) {
+            const d = manhattan(gx, gy, rx, ry);
+            if (d < min) min = d;
+        }
+        return min;
+    };
+
+    const isMobileViewport = window.innerWidth <= 768;
+    if (isMobileViewport) {
+        const d = minDistanceToRadio(player.x, player.y);
+        const within2 = d <= 2;
+        const inSpotifyZone = isInSpotifyZone(player.x, player.y);
+
+        const mobileSpotifyPanel = document.querySelector('.gba-body .spotify-pad');
+        if (mobileSpotifyPanel) {
+            mobileSpotifyPanel.classList.toggle('spotify-hidden', !inSpotifyZone);
+            mobileSpotifyPanel.setAttribute('aria-hidden', inSpotifyZone ? 'false' : 'true');
+        }
+
+        // Proximity hints above boombox
+        showRadioSpeechBubble = within2 && !inSpotifyZone;
+    } else {
+        // Desktop: show/hide floating Spotify popup based on the same zone tiles
+        const popup = document.getElementById('music-player-popup');
+        if (popup) {
+            const shouldShow = isInSpotifyZone(player.x, player.y);
+            popup.classList.toggle('hidden', !shouldShow);
+        }
+    }
+
+    // Spawn floating notes when music is playing
+    const musicPlaying = window.spotifyState && window.spotifyState.isPlaying;
+    if (musicPlaying) {
+        noteSpawnTimer++;
+        if (noteSpawnTimer >= 40) {
+            noteSpawnTimer = 0;
+            spawnNote();
+        }
+    }
+
     if (!player.moving) {
         let dx = 0;
         let dy = 0;
@@ -324,6 +434,20 @@ function update() {
 
             // Updated Boundary Check (0-40)
             if (nextGridX >= 0 && nextGridX < COLS && nextGridY >= 0 && nextGridY < ROWS) {
+
+                // Check Automated Music Trigger Ring (Moved before collision to allow bumping triggers)
+                const radioTiles = [[21, 18], [21, 19], [21, 20], [22, 20], [23, 20], [24, 20], [24, 19], [24, 18], [23, 18], [22, 18]];
+                if (radioTiles.some(t => t[0] === nextGridX && t[1] === nextGridY)) {
+                    showRadioSpeechBubble = true;
+                    clearTimeout(radioSpeechTimeout);
+                    radioSpeechTimeout = setTimeout(() => showRadioSpeechBubble = false, 3000);
+                    // Desktop-only: show floating Spotify card when approaching boombox.
+                    // Mobile embeds Spotify directly into the console UI (no popup).
+                    if (window.innerWidth >= 769) {
+                        const popup = document.getElementById('music-player-popup');
+                        if (popup) popup.classList.remove('hidden');
+                    }
+                }
 
                 // Surgical Collision Check (8px grid)
                 const tileVal = collisionMap[nextGridY][nextGridX];
@@ -446,15 +570,65 @@ function draw() {
     ctx.textAlign = 'start';
     ctx.textBaseline = 'alphabetic';
 
-    // 3. Draw Player
+    // 3. Render Prop (Radio) vs Player
     const spriteKey = `${player.direction}_${player.frameX}`;
     const currentSprite = playerSprites[spriteKey];
 
-    if (currentSprite && currentSprite.complete) {
-        // Center on 8px grid (Scaled to 28x42 as requested)
-        // Fixed dimensions, no scaling animation
-        ctx.drawImage(currentSprite, player.pixelX - 8, player.pixelY - 28, 24, 36);
+    const drawPlayerSprite = () => {
+        if (currentSprite && currentSprite.complete) {
+            ctx.drawImage(currentSprite, player.pixelX - 8, player.pixelY - 28, 24, 36);
+        }
+    };
+
+    const drawRadioSprite = () => {
+        if (radioImage.complete) {
+            // Reverted Boombox cleanly exactly to 1.5x scale natively to true 24x24 bounds.
+            // Symmetrically calculated dropping its center origin over (184, 152).
+            ctx.drawImage(radioImage, 172, 140, 24, 24);
+        }
+    };
+
+    // Radio first so Brendan always renders on top
+    drawRadioSprite();
+    drawPlayerSprite();
+
+    // ── Floating ♪ notes (only when Spotify is playing) ──
+    const isPlaying = window.spotifyState && window.spotifyState.isPlaying;
+    for (let i = noteParticles.length - 1; i >= 0; i--) {
+        const n = noteParticles[i];
+        n.life -= n.decay;
+        n.x += n.vx;
+        n.y += n.vy;
+        n.alpha = Math.max(0, n.life);
+        if (n.life <= 0) { noteParticles.splice(i, 1); continue; }
+        ctx.save();
+        ctx.globalAlpha = n.alpha;
+        ctx.fillStyle = '#1DB954';
+        ctx.font = `${Math.round(n.size)}px 'Press Start 2P', monospace`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.imageSmoothingEnabled = false;
+        ctx.fillText(n.char, n.x, n.y);
+        ctx.restore();
     }
+
+    // Render Action Speech Bubble (brief proximity hint)
+    if (showRadioSpeechBubble) {
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = '7px "Press Start 2P"';
+        const msg = '♪';
+        const bX = 184; // boombox centre
+        const bY = 134; // just above boombox top
+
+        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+        ctx.fillRect(bX - 10, bY - 9, 20, 12);
+        ctx.fillStyle = '#1DB954';
+        ctx.fillText(msg, bX, bY - 3);
+        ctx.textAlign = 'start';
+        ctx.textBaseline = 'alphabetic';
+    }
+
 
     // 4. Editor Overlay
     if (isEditorMode) {
@@ -506,10 +680,6 @@ function draw() {
 function loop() {
     update();
     draw();
-    // Debug Log (User requested for 1 second, but I'll update it to check frame)
-    if (Math.random() < 0.05) { // Log occasionally to avoid spamming too hard, or just log
-        console.log('Current Frame:', player.frameX, 'Direction:', player.direction);
-    }
     requestAnimationFrame(loop);
 }
 

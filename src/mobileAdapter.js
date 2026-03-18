@@ -3,7 +3,7 @@
 
 (function () {
     // 1. Detection: check for mobile width
-    const isMobile = window.innerWidth < 768;
+    const isMobile = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
     if (!isMobile) return;
 
     console.log('Mobile device detected. Initializing GBA Adapter...');
@@ -36,15 +36,25 @@
     // Create Controls
     const controlsHTML = `
         <div class="controls">
-            <div class="d-pad">
-                <button data-key="ArrowUp" class="d-btn up"></button>
-                <button data-key="ArrowLeft" class="d-btn left"></button>
-                <button data-key="ArrowRight" class="d-btn right"></button>
-                <button data-key="ArrowDown" class="d-btn down"></button>
-                <div class="d-center"></div>
+            <div class="controls-top">
+                <div class="d-pad">
+                    <button data-key="ArrowUp" class="d-btn up"></button>
+                    <button data-key="ArrowLeft" class="d-btn left"></button>
+                    <button data-key="ArrowRight" class="d-btn right"></button>
+                    <button data-key="ArrowDown" class="d-btn down"></button>
+                    <div class="d-center"></div>
+                </div>
+                <div class="action-pad">
+                    <button data-key="Enter" class="a-btn">A</button>
+                </div>
             </div>
-            <div class="action-pad">
-                <button data-key="Enter" class="a-btn">A</button>
+            <div class="spotify-pad spotify-hidden" aria-label="Spotify player" aria-hidden="true">
+                <iframe
+                    class="spotify-embed-frame-mobile"
+                    src="https://open.spotify.com/embed/playlist/7C6Ex5Rah9aCJxBHNxscch?utm_source=generator&theme=0&compact=1"
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    loading="lazy">
+                </iframe>
             </div>
         </div>
     `;
@@ -59,6 +69,12 @@
 
     // 3. Input Bridge
     const buttons = wrapper.querySelectorAll('button[data-key]');
+
+    // 4. Mobile-only Spotify embed: force compact single-row UI
+    const spotifyIframe = wrapper.querySelector('.spotify-embed-frame-mobile');
+    if (spotifyIframe && window.innerWidth <= 768) {
+        spotifyIframe.src = 'https://open.spotify.com/embed/playlist/7C6Ex5Rah9aCJxBHNxscch?utm_source=generator&theme=0&compact=1';
+    }
 
     // Helper to dispatch key events
     const triggerKey = (key, type) => {
