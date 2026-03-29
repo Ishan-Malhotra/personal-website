@@ -110,6 +110,12 @@ Collision is checked against a `40x40` grid of 8px tiles. This allows for:
 *   Sub-tile movement blocking (players can stand "halfway" on a visual tile).
 *   Tight collision boxes for non-square geometry (fences, small obstacles).
 
+### 🖼️ Image Optimization & WebP
+The project uses a custom automation script to convert all assets to WebP for maximum performance.
+*   **Local Assets**: All images in `assets/` are converted to `.webp`.
+*   **External Gallery**: External images from `galleryData.json` are automatically downloaded, optimized, and saved locally.
+*   **Automation**: Run `npm run convert-images` to optimize any new assets added to the project.
+
 ### Saving Changes
 Since the editor runs in the browser, changes are not automatically saved to files.
 1.  Make edits in God Mode.

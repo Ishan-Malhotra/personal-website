@@ -35,10 +35,10 @@ mapImage.onload = () => {
     assetsLoaded = true;
     console.log('Map loaded');
 };
-mapImage.src = 'assets/map.png';
+mapImage.src = 'assets/map.webp';
 
 const radioImage = new Image();
-radioImage.src = 'assets/boombox.png';
+radioImage.src = 'assets/boombox.webp';
 
 const playerSprites = {};
 let loadedSpritesCount = 0;
@@ -50,7 +50,7 @@ function loadPlayerAssets() {
         for (let i = 0; i < 4; i++) {
             const key = `${dir}_${i}`;
             const img = new Image();
-            img.src = `assets/player/${key}.png`;
+            img.src = `assets/player/${key}.webp`;
             img.onload = () => {
                 loadedSpritesCount++;
                 if (loadedSpritesCount === totalSprites) {
@@ -388,6 +388,10 @@ function update() {
         if (mobileSpotifyPanel) {
             mobileSpotifyPanel.classList.toggle('spotify-hidden', !inSpotifyZone);
             mobileSpotifyPanel.setAttribute('aria-hidden', inSpotifyZone ? 'false' : 'true');
+            // When the panel transitions from hidden -> visible, scale the compact iframe
+            if (inSpotifyZone && typeof window.scaleSpotifyEmbed === 'function') {
+                window.scaleSpotifyEmbed();
+            }
         }
 
         // Proximity hints above boombox

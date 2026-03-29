@@ -1,0 +1,29 @@
+{
+  "name": "oldalewebsite",
+  "version": "1.0.0",
+  "description": "A personal website presented as a fully interactive GBA-style RPG overworld. This engine mimics the feel of *Pokémon Emerald*, featuring a grid-based movement system, collision detection, and a built-in map editor.",
+  "main": "gallery.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "convert-images": "node scripts/convert-images.js",
+    "start": "npx serve ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ishan-Malhotra/personal-website.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Ishan-Malhotra/personal-website/issues"
+  },
+  "homepage": "https://github.com/Ishan-Malhotra/personal-website#readme",
+  "dependencies": {
+    "axios": "^1.14.0",
+    "fs-extra": "^11.3.4",
+    "glob": "^13.0.6",
+    "sharp": "^0.34.5"
+  }
+}

@@ -76,6 +76,50 @@
         spotifyIframe.src = 'https://open.spotify.com/embed/playlist/7C6Ex5Rah9aCJxBHNxscch?utm_source=generator&theme=0&compact=1';
     }
 
+    // 5. Mobile-only: expose a scaler for narrow screens.
+    // NOTE: This is intentionally *not* called on load, only when panel becomes visible.
+    function scaleSpotifyEmbed() {
+        if (window.innerWidth > 768) return;
+        const iframe = document.querySelector('.spotify-embed-frame-mobile');
+        const container = iframe ? iframe.parentElement : null; // .spotify-pad
+        if (!iframe || !container) return;
+
+        // Reset to a known state so measurements are correct
+        iframe.style.width = '300px';
+        iframe.style.height = '80px';
+        iframe.style.transform = 'none';
+        iframe.style.transformOrigin = 'top left';
+
+        const availableWidth = container.offsetWidth;
+        const nativeWidth = 300;
+
+        if (availableWidth > 0 && availableWidth < nativeWidth) {
+            const scale = availableWidth / nativeWidth;
+            iframe.style.width = nativeWidth + 'px';
+            iframe.style.height = '80px';
+            iframe.style.transform = `scale(${scale})`;
+            iframe.style.transformOrigin = 'top left';
+            container.style.height = Math.ceil(80 * scale) + 'px';
+            container.style.width = '100%';
+            container.style.overflow = 'hidden';
+        } else if (availableWidth > 0) {
+            iframe.style.width = availableWidth + 'px';
+            iframe.style.height = '80px';
+            iframe.style.transform = 'none';
+            container.style.height = '80px';
+            container.style.width = '100%';
+            container.style.overflow = 'hidden';
+        }
+    }
+
+    // Expose for game logic + resize handler
+    window.scaleSpotifyEmbed = scaleSpotifyEmbed;
+    window.addEventListener('resize', () => {
+        if (typeof window.scaleSpotifyEmbed === 'function') {
+            window.scaleSpotifyEmbed();
+        }
+    }, { passive: true });
+
     // Helper to dispatch key events
     const triggerKey = (key, type) => {
         const event = new KeyboardEvent(type, {
