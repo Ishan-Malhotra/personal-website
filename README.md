@@ -2,7 +2,7 @@
 
 A personal website presented as a fully interactive GBA-style RPG overworld. This engine mimics the feel of *Pokémon Emerald*, featuring a grid-based movement system, collision detection, and a built-in map editor.
 
-## 🎮 Engine Features
+##  Engine Features
 
 ### Core Systems
 *   **Canvas 2D Rendering**: The game runs on a simplified HTML5 Canvas engine with a dedicated render loop (`requestAnimationFrame`).
@@ -24,7 +24,7 @@ A personal website presented as a fully interactive GBA-style RPG overworld. Thi
 
 ---
 
-## 📱 Mobile Game Boy UI + Spotify
+##  Mobile Game Boy UI + Spotify
 
 On mobile (`≤ 768px`) the canvas is wrapped in a CSS Game Boy shell with touch controls. Spotify is integrated into the Game Boy body (not a floating overlay on mobile).
 
@@ -61,7 +61,7 @@ The player spawnpoint is set in `src/main.js`:
 
 ---
 
-## 🛠️ God Mode (In-Game Editor)
+## God Mode (In-Game Editor)
 
 The engine features a robust "God Mode" that allows you to edit the game world directly in the browser.
 
@@ -70,13 +70,13 @@ Press **Shift + E** to toggle Editor Mode.
 *   **Visuals**: A green debug tooltip appears, and the map shows overlay grids (Red = Wall, Blue = Trigger).
 *   **Controls**: Mouse interaction is enabled for painting and labeling.
 
-### 🎨 Painting Collision
+### Painting Collision
 Modify the walkable areas by hovering your mouse and pressing keys:
 *   **`1`**: Paint **Wall** (Red). Blocks player movement.
 *   **`2`**: Paint **Trigger** (Blue). Fires `checkBuildingTrigger()` events.
 *   **`0`**: **Clear**. Makes the tile walkable.
 
-### 🏷️ Dynamic Labels
+### Dynamic Labels
 Floating labels (e.g., "Projects", "About Me") can be managed dynamically:
 *   **Add**: Click the **"Add Label"** button (top-left) -> Click map -> Enter text.
 *   **Delete**: Click an existing label to select it (turns green) -> Press **Backspace**.
@@ -84,7 +84,7 @@ Floating labels (e.g., "Projects", "About Me") can be managed dynamically:
 
 ---
 
-## 📸 Cinematic Photo Gallery
+## Cinematic Photo Gallery
 
 The website includes a dedicated, highly-polished **Photo Gallery** accessible via the top map boundary (grid coordinates `(16..23, 0)`).
 
@@ -97,7 +97,7 @@ The website includes a dedicated, highly-polished **Photo Gallery** accessible v
 
 ---
 
-## 🧑‍💻 Technical Details
+## Technical Details
 
 ### Player Animation
 The player uses a 4-direction, 4-frame animation cycle:
@@ -110,7 +110,7 @@ Collision is checked against a `40x40` grid of 8px tiles. This allows for:
 *   Sub-tile movement blocking (players can stand "halfway" on a visual tile).
 *   Tight collision boxes for non-square geometry (fences, small obstacles).
 
-### 🖼️ Image Optimization & WebP
+### Image Optimization & WebP
 The project uses a custom automation script to convert all assets to WebP for maximum performance.
 *   **Local Assets**: All images in `assets/` are converted to `.webp`.
 *   **External Gallery**: External images from `galleryData.json` are automatically downloaded, optimized, and saved locally.
