@@ -9,6 +9,11 @@ const COLLISION_TILE_SIZE = 8; // Updated to 8px
 const ROWS = 40;               // 320 / 8
 const COLS = 40;               // 320 / 8
 const MOVEMENT_SPEED = 6;
+const MOVEMENT_SPEED_DESKTOP = 7;
+
+function getMovementSpeed() {
+    return window.innerWidth >= 769 ? MOVEMENT_SPEED_DESKTOP : MOVEMENT_SPEED;
+}
 
 // Game State
 const PORTALS = [
@@ -490,10 +495,11 @@ function update() {
             player.frameX = (player.frameX + 1) % 4;
         }
 
-        if (player.pixelX < player.targetX) player.pixelX = Math.min(player.pixelX + MOVEMENT_SPEED, player.targetX);
-        if (player.pixelX > player.targetX) player.pixelX = Math.max(player.pixelX - MOVEMENT_SPEED, player.targetX);
-        if (player.pixelY < player.targetY) player.pixelY = Math.min(player.pixelY + MOVEMENT_SPEED, player.targetY);
-        if (player.pixelY > player.targetY) player.pixelY = Math.max(player.pixelY - MOVEMENT_SPEED, player.targetY);
+        const speed = getMovementSpeed();
+        if (player.pixelX < player.targetX) player.pixelX = Math.min(player.pixelX + speed, player.targetX);
+        if (player.pixelX > player.targetX) player.pixelX = Math.max(player.pixelX - speed, player.targetX);
+        if (player.pixelY < player.targetY) player.pixelY = Math.min(player.pixelY + speed, player.targetY);
+        if (player.pixelY > player.targetY) player.pixelY = Math.max(player.pixelY - speed, player.targetY);
 
         if (player.pixelX === player.targetX && player.pixelY === player.targetY) {
             player.moving = false;
