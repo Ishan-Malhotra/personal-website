@@ -521,9 +521,136 @@ function checkBuildingTrigger(gx, gy) {
         isTransitioning = true;
         inputEnabled = false;
         redirectTriggered = false;
+        if (portal.url.startsWith('mailto:')) {
+            mailDebug('portal_triggered', {
+                name: portal.name,
+                url: portal.url,
+                tile: { x: gx, y: gy },
+                userAgent: navigator.userAgent,
+                hasMailHandlerHint: typeof navigator.registerProtocolHandler === 'function'
+            });
+        }
     } else {
         console.log(`Trigger activated at ${gx}, ${gy} (No Portal)`);
     }
+}
+
+function mailDebug(stage, details = {}) {
+    console.log(`[MAIL DEBUG ${new Date().toISOString()}] ${stage}`, details);
+}
+
+// Chrome blocks programmatic mailto: ("user gesture required") even from
+// location.href inside click handlers. Offer an Open With chooser instead:
+// native mailto <a>, plus Gmail / Outlook web compose (always works).
+function showMailtoPrompt(mailtoUrl) {
+    mailDebug('show_prompt_start', { mailtoUrl });
+
+    const existing = document.getElementById('mailto-prompt');
+    if (existing) {
+        mailDebug('removing_existing_prompt');
+        existing.remove();
+    }
+
+    const email = mailtoUrl.replace(/^mailto:/i, '').split('?')[0];
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}`;
+    const outlookUrl = `https://outlook.live.com/mail/0/deeplink/compose?to=${encodeURIComponent(email)}`;
+
+    const prompt = document.createElement('div');
+    prompt.id = 'mailto-prompt';
+    prompt.innerHTML = `
+        <div class="mailto-prompt-card">
+            <p>OPEN WITH</p>
+            <span class="mailto-prompt-email">${email}</span>
+            <div class="mailto-prompt-actions">
+                <a class="mailto-opt mailto-opt-native" href="${mailtoUrl}">MAIL APP</a>
+                <a class="mailto-opt mailto-opt-gmail" href="${gmailUrl}" target="_blank" rel="noopener">GMAIL</a>
+                <a class="mailto-opt mailto-opt-outlook" href="${outlookUrl}" target="_blank" rel="noopener">OUTLOOK</a>
+                <button type="button" class="mailto-opt mailto-opt-copy">COPY EMAIL</button>
+            </div>
+            <button type="button" class="mailto-prompt-close" aria-label="Close">CLOSE</button>
+        </div>
+    `;
+    document.body.appendChild(prompt);
+    mailDebug('prompt_dom_inserted', {
+        promptExists: !!document.getElementById('mailto-prompt'),
+        email,
+        nativeHref: mailtoUrl,
+        gmailUrl,
+        outlookUrl
+    });
+
+    const dismiss = (reason) => {
+        mailDebug('prompt_dismiss', { reason });
+        prompt.remove();
+    };
+
+    const nativeBtn = prompt.querySelector('.mailto-opt-native');
+    const gmailBtn = prompt.querySelector('.mailto-opt-gmail');
+    const outlookBtn = prompt.querySelector('.mailto-opt-outlook');
+    const copyBtn = prompt.querySelector('.mailto-opt-copy');
+    const closeBtn = prompt.querySelector('.mailto-prompt-close');
+
+    // Native mailto: do NOT call location.href — Chrome rejects it without gesture.
+    // Let the <a> default action run untouched.
+    nativeBtn.addEventListener('click', (e) => {
+        mailDebug('chooser_native_click', {
+            href: nativeBtn.href,
+            isTrusted: e.isTrusted,
+            defaultPrevented: e.defaultPrevented
+        });
+        // Keep prompt open briefly so user can fall back to Gmail if OS blocks mailto
+        setTimeout(() => {
+            mailDebug('native_click_complete_prompt_still_open');
+        }, 800);
+    });
+
+    gmailBtn.addEventListener('click', (e) => {
+        mailDebug('chooser_gmail_click', { href: gmailBtn.href, isTrusted: e.isTrusted });
+        setTimeout(() => dismiss('gmail'), 150);
+    });
+
+    outlookBtn.addEventListener('click', (e) => {
+        mailDebug('chooser_outlook_click', { href: outlookBtn.href, isTrusted: e.isTrusted });
+        setTimeout(() => dismiss('outlook'), 150);
+    });
+
+    copyBtn.addEventListener('click', async (e) => {
+        mailDebug('chooser_copy_click', { email, isTrusted: e.isTrusted });
+        try {
+            await navigator.clipboard.writeText(email);
+            copyBtn.textContent = 'COPIED!';
+            mailDebug('copy_success', { email });
+        } catch (err) {
+            mailDebug('copy_failed', { message: String(err) });
+            // Fallback
+            window.prompt('Copy email address:', email);
+        }
+    });
+
+    closeBtn.addEventListener('click', (e) => {
+        mailDebug('close_click', { isTrusted: e.isTrusted });
+        dismiss('close_button');
+    });
+
+    const onVisibility = () => {
+        mailDebug('visibilitychange', { visibilityState: document.visibilityState });
+    };
+    const onBlur = () => mailDebug('window_blur_after_prompt');
+    const onFocus = () => mailDebug('window_focus_after_prompt');
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('blur', onBlur);
+    window.addEventListener('focus', onFocus);
+
+    const observer = new MutationObserver(() => {
+        if (!document.getElementById('mailto-prompt')) {
+            mailDebug('prompt_removed_cleanup');
+            document.removeEventListener('visibilitychange', onVisibility);
+            window.removeEventListener('blur', onBlur);
+            window.removeEventListener('focus', onFocus);
+            observer.disconnect();
+        }
+    });
+    observer.observe(document.body, { childList: true });
 }
 
 document.getElementById('close-btn').addEventListener('click', () => {
@@ -668,15 +795,40 @@ function draw() {
         if (fadeOpacity >= 1 && !redirectTriggered) {
             redirectTriggered = true;
             console.log('FINAL REDIRECT TO:', pendingURL);
-            window.location.href = pendingURL;
 
-            // Reset game state after delay so player can continue if they return
-            setTimeout(() => {
+            // mailto: cannot be opened reliably after an async fade in Chrome
+            // (no user gesture). Show a real clickable link instead.
+            // HTTP / relative portals keep using location.href.
+            if (pendingURL.startsWith('mailto:')) {
+                mailDebug('fade_complete_mailto_branch', {
+                    pendingURL,
+                    fadeOpacity,
+                    isTransitioning,
+                    inputEnabled
+                });
                 isTransitioning = false;
                 fadeOpacity = 0;
                 inputEnabled = true;
                 redirectTriggered = false;
-            }, 1000);
+                mailDebug('state_reset_before_prompt', {
+                    isTransitioning,
+                    fadeOpacity,
+                    inputEnabled,
+                    redirectTriggered
+                });
+                showMailtoPrompt(pendingURL);
+            } else {
+                mailDebug('fade_complete_http_branch', { pendingURL });
+                window.location.href = pendingURL;
+
+                // Reset game state after delay so player can continue if they return
+                setTimeout(() => {
+                    isTransitioning = false;
+                    fadeOpacity = 0;
+                    inputEnabled = true;
+                    redirectTriggered = false;
+                }, 1000);
+            }
         }
     }
 }
