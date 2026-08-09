@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Fetch Gallery Data
     try {
         const response = await fetch('./galleryData.json');
-        photos = await response.json();
+        photos = await response.json(); 
 
         // Shuffle photos using Fisher-Yates
         for (let i = photos.length - 1; i > 0; i--) {
