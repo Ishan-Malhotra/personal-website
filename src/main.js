@@ -19,7 +19,7 @@ function getMovementSpeed() {
 const PORTALS = [
     { name: 'Home', url: 'https://ishanmalhotra.bearblog.dev/', coords: [[10, 14], [10, 15], [11, 14], [11, 15]] },
     { name: 'Blog', url: 'https://ishanmalhotra.bearblog.dev/blog/', coords: [[28, 12], [29, 12], [29, 13], [28, 13]] },
-    { name: 'Theme', url: 'https://ishanmalhotra.bearblog.dev/theme/', coords: [[30, 32], [31, 32], [31, 33], [30, 33]] },
+    { name: 'Work', url: 'https://ishanmalhotra.bearblog.dev/work/', coords: [[30, 32], [31, 32], [31, 33], [30, 33]] },
     { name: 'Bookshelf', url: 'https://ishanmalhotra.bearblog.dev/bookshelf/', coords: [[12, 32], [13, 32], [13, 33], [12, 33]] },
     { name: 'X', url: 'https://x.com/_ishanmalhotra_', coords: [[0, 20], [0, 21], [0, 22], [0, 23]] },
     { name: 'Mail', url: 'mailto:ishanmalhotra2004@gmail.com', coords: [[39, 16], [39, 17], [39, 18], [39, 19], [39, 20], [39, 21], [39, 22], [39, 23]] },
