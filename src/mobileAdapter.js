@@ -45,7 +45,7 @@
                     <div class="d-center"></div>
                 </div>
                 <div class="action-pad">
-                    <button data-key="Enter" class="a-btn">A</button>
+                    <button data-key="Enter" class="a-btn" aria-label="Interact with boombox">A</button>
                 </div>
             </div>
             <div class="spotify-pad spotify-hidden" aria-label="Spotify player" aria-hidden="true">
@@ -76,40 +76,30 @@
         spotifyIframe.src = 'https://open.spotify.com/embed/playlist/7C6Ex5Rah9aCJxBHNxscch?utm_source=generator&theme=0&compact=1';
     }
 
-    // 5. Mobile-only: expose a scaler for narrow screens.
-    // NOTE: This is intentionally *not* called on load, only when panel becomes visible.
+    // 5. Mobile-only: scale the compact Spotify embed to fit the pad width.
+    // Compact embeds need ~300px minimum; the GBA shell is often narrower, so we
+    // scale down from a fixed native size instead of clipping the play button.
     function scaleSpotifyEmbed() {
         if (window.innerWidth > 768) return;
         const iframe = document.querySelector('.spotify-embed-frame-mobile');
         const container = iframe ? iframe.parentElement : null; // .spotify-pad
-        if (!iframe || !container) return;
+        if (!iframe || !container || container.classList.contains('spotify-hidden')) return;
 
-        // Reset to a known state so measurements are correct
-        iframe.style.width = '300px';
-        iframe.style.height = '80px';
-        iframe.style.transform = 'none';
-        iframe.style.transformOrigin = 'top left';
-
-        const availableWidth = container.offsetWidth;
         const nativeWidth = 300;
+        const nativeHeight = 80;
+        // Subtract inset ring (2px each side) so content stays inside the pad
+        const availableWidth = Math.max(0, container.clientWidth - 4);
+        if (availableWidth <= 0) return;
 
-        if (availableWidth > 0 && availableWidth < nativeWidth) {
-            const scale = availableWidth / nativeWidth;
-            iframe.style.width = nativeWidth + 'px';
-            iframe.style.height = '80px';
-            iframe.style.transform = `scale(${scale})`;
-            iframe.style.transformOrigin = 'top left';
-            container.style.height = Math.ceil(80 * scale) + 'px';
-            container.style.width = '100%';
-            container.style.overflow = 'hidden';
-        } else if (availableWidth > 0) {
-            iframe.style.width = availableWidth + 'px';
-            iframe.style.height = '80px';
-            iframe.style.transform = 'none';
-            container.style.height = '80px';
-            container.style.width = '100%';
-            container.style.overflow = 'hidden';
-        }
+        const scale = Math.min(1, availableWidth / nativeWidth);
+
+        iframe.style.width = nativeWidth + 'px';
+        iframe.style.height = nativeHeight + 'px';
+        iframe.style.transformOrigin = 'top left';
+        iframe.style.transform = scale < 1 ? `scale(${scale})` : 'none';
+
+        container.style.height = Math.ceil(nativeHeight * scale) + 'px';
+        container.style.overflow = 'hidden';
     }
 
     // Expose for game logic + resize handler
@@ -119,6 +109,22 @@
             window.scaleSpotifyEmbed();
         }
     }, { passive: true });
+
+    // Re-scale after layout settles (panel max-height transition / font load)
+    const scheduleScale = () => {
+        requestAnimationFrame(() => {
+            scaleSpotifyEmbed();
+            setTimeout(scaleSpotifyEmbed, 200);
+        });
+    };
+    // Observe class changes on the pad (spotify-hidden toggled by game loop)
+    const pad = wrapper.querySelector('.spotify-pad');
+    if (pad && typeof MutationObserver !== 'undefined') {
+        new MutationObserver(scheduleScale).observe(pad, {
+            attributes: true,
+            attributeFilter: ['class', 'aria-hidden']
+        });
+    }
 
     // Helper to dispatch key events
     const triggerKey = (key, type) => {

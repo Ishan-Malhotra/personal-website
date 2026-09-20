@@ -115,6 +115,12 @@ const keys = {
 // Radio UI State
 let showRadioSpeechBubble = false;
 let radioSpeechTimeout = null;
+// After auto-hide, don't re-show until player leaves boombox proximity
+let radioBubbleCooldown = false;
+// User dismissed the desktop Spotify popup; cleared when leaving SPOTIFY_ZONE
+let musicDismissed = false;
+// A-button forced open (mobile/desktop) while still near the boombox
+let musicForcedOpen = false;
 
 // Exact "Spotify visible" zone tiles (grid coordinates)
 const SPOTIFY_ZONE = [
@@ -131,7 +137,96 @@ const SPOTIFY_ZONE = [
     { x: 25, y: 16 }, { x: 25, y: 17 }, { x: 25, y: 18 }, { x: 25, y: 19 }
 ];
 
+// Radio/boombox footprint tiles (grid coordinates) — shared for proximity + bump checks
+const RADIO_FOOTPRINT = [
+    [21, 18], [21, 19], [21, 20],
+    [22, 20], [23, 20], [24, 20],
+    [24, 19], [24, 18],
+    [23, 18], [22, 18]
+];
+
 const isInSpotifyZone = (gx, gy) => SPOTIFY_ZONE.some(t => t.x === gx && t.y === gy);
+
+const manhattan = (ax, ay, bx, by) => Math.abs(ax - bx) + Math.abs(ay - by);
+
+function minDistanceToRadio(gx, gy) {
+    let min = Infinity;
+    for (const [rx, ry] of RADIO_FOOTPRINT) {
+        const d = manhattan(gx, gy, rx, ry);
+        if (d < min) min = d;
+    }
+    return min;
+}
+
+function isMusicUiVisible() {
+    if (window.innerWidth <= 768) {
+        const panel = document.querySelector('.gba-body .spotify-pad');
+        return !!(panel && !panel.classList.contains('spotify-hidden'));
+    }
+    const popup = document.getElementById('music-player-popup');
+    return !!(popup && !popup.classList.contains('hidden'));
+}
+
+function setMusicVisible(visible) {
+    if (window.innerWidth <= 768) {
+        const mobileSpotifyPanel = document.querySelector('.gba-body .spotify-pad');
+        if (mobileSpotifyPanel) {
+            mobileSpotifyPanel.classList.toggle('spotify-hidden', !visible);
+            mobileSpotifyPanel.setAttribute('aria-hidden', visible ? 'false' : 'true');
+            if (visible && typeof window.scaleSpotifyEmbed === 'function') {
+                window.scaleSpotifyEmbed();
+            }
+        }
+    } else {
+        const popup = document.getElementById('music-player-popup');
+        if (popup) popup.classList.toggle('hidden', !visible);
+    }
+}
+
+/** ♪ hint above boombox — shows on approach, hides after 3s idle */
+function updateRadioProximityHint(within2, musicOpen) {
+    if (!within2 || musicOpen) {
+        showRadioSpeechBubble = false;
+        clearTimeout(radioSpeechTimeout);
+        radioSpeechTimeout = null;
+        if (!within2) radioBubbleCooldown = false;
+        return;
+    }
+
+    // Near boombox, music closed — show once, then auto-dismiss after 3s
+    if (radioBubbleCooldown) {
+        showRadioSpeechBubble = false;
+        return;
+    }
+
+    if (!showRadioSpeechBubble && !radioSpeechTimeout) {
+        showRadioSpeechBubble = true;
+        radioSpeechTimeout = setTimeout(() => {
+            showRadioSpeechBubble = false;
+            radioBubbleCooldown = true;
+            radioSpeechTimeout = null;
+        }, 3000);
+    }
+}
+
+/** A / Enter — interact with boombox when nearby (mobile A button + keyboard) */
+function handleInteract() {
+    if (!inputEnabled || isEditorMode || isTransitioning) return;
+    if (document.getElementById('mailto-prompt')) return;
+
+    const nearRadio = minDistanceToRadio(player.x, player.y) <= 2
+        || isInSpotifyZone(player.x, player.y);
+
+    if (!nearRadio) return;
+
+    musicDismissed = false;
+    musicForcedOpen = true;
+    showRadioSpeechBubble = false;
+    clearTimeout(radioSpeechTimeout);
+    radioSpeechTimeout = null;
+    radioBubbleCooldown = true;
+    setMusicVisible(true);
+}
 
 // ── Floating ♪ note particles above boombox ──
 const noteParticles = [];
@@ -182,8 +277,17 @@ window.addEventListener('keydown', (e) => {
 
     if (keys.hasOwnProperty(e.key)) keys[e.key] = true;
 
+    // A button / Enter / Space — interact (boombox)
+    if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) {
+        if (!isEditorMode && inputEnabled && !isTransitioning) {
+            e.preventDefault();
+            handleInteract();
+        }
+    }
+
     // Backspace to Delete Label
     if (isEditorMode && selectedLabelIndex !== -1 && e.key === 'Backspace') {
+        e.preventDefault();
         const removed = dynamicLabels.splice(selectedLabelIndex, 1);
         console.log("Deleted label:", removed[0].text);
         selectedLabelIndex = -1;
@@ -195,14 +299,18 @@ window.addEventListener('keydown', (e) => {
     }
 });
 
+function dismissMusicPlayer() {
+    musicDismissed = true;
+    showRadioSpeechBubble = false;
+    const popup = document.getElementById('music-player-popup');
+    if (popup) popup.classList.add('hidden');
+}
+
 // Bind Music Close Button once window is loaded
 window.addEventListener('DOMContentLoaded', () => {
     const closeMusic = document.getElementById('close-music-btn');
     if (closeMusic) {
-        closeMusic.addEventListener('click', () => {
-            document.getElementById('music-player-popup').classList.add('hidden');
-            showRadioSpeechBubble = false; // Hide bubble if player manual closed immediately
-        });
+        closeMusic.addEventListener('click', dismissMusicPlayer);
     }
 });
 
@@ -364,60 +472,36 @@ function update() {
 
     if (!inputEnabled || isEditorMode) return;
 
-    // ── Mobile-only: show/hide embedded Spotify panel near boombox ──
-    // Radio/boombox footprint tiles (grid coordinates)
-    const RADIO_FOOTPRINT = [
-        [21, 18], [21, 19], [21, 20],
-        [22, 20], [23, 20], [24, 20],
-        [24, 19], [24, 18],
-        [23, 18], [22, 18]
-    ];
+    // ── Spotify UI: show near boombox; respect desktop dismiss until player leaves zone ──
+    const inSpotifyZone = isInSpotifyZone(player.x, player.y);
+    const within2 = minDistanceToRadio(player.x, player.y) <= 2;
 
-    const manhattan = (ax, ay, bx, by) => Math.abs(ax - bx) + Math.abs(ay - by);
-    const minDistanceToRadio = (gx, gy) => {
-        let min = Infinity;
-        for (const [rx, ry] of RADIO_FOOTPRINT) {
-            const d = manhattan(gx, gy, rx, ry);
-            if (d < min) min = d;
-        }
-        return min;
-    };
-
-    const isMobileViewport = window.innerWidth <= 768;
-    if (isMobileViewport) {
-        const d = minDistanceToRadio(player.x, player.y);
-        const within2 = d <= 2;
-        const inSpotifyZone = isInSpotifyZone(player.x, player.y);
-
-        const mobileSpotifyPanel = document.querySelector('.gba-body .spotify-pad');
-        if (mobileSpotifyPanel) {
-            mobileSpotifyPanel.classList.toggle('spotify-hidden', !inSpotifyZone);
-            mobileSpotifyPanel.setAttribute('aria-hidden', inSpotifyZone ? 'false' : 'true');
-            // When the panel transitions from hidden -> visible, scale the compact iframe
-            if (inSpotifyZone && typeof window.scaleSpotifyEmbed === 'function') {
-                window.scaleSpotifyEmbed();
-            }
-        }
-
-        // Proximity hints above boombox
-        showRadioSpeechBubble = within2 && !inSpotifyZone;
-    } else {
-        // Desktop: show/hide floating Spotify popup based on the same zone tiles
-        const popup = document.getElementById('music-player-popup');
-        if (popup) {
-            const shouldShow = isInSpotifyZone(player.x, player.y);
-            popup.classList.toggle('hidden', !shouldShow);
-        }
+    if (!inSpotifyZone) {
+        musicDismissed = false;
+    }
+    if (!within2 && !inSpotifyZone) {
+        musicForcedOpen = false;
     }
 
-    // Spawn floating notes when music is playing
-    const musicPlaying = window.spotifyState && window.spotifyState.isPlaying;
-    if (musicPlaying) {
+    const isMobileViewport = window.innerWidth <= 768;
+    const shouldShowMusic = inSpotifyZone || musicForcedOpen;
+    if (isMobileViewport) {
+        setMusicVisible(shouldShowMusic);
+    } else {
+        setMusicVisible(shouldShowMusic && !musicDismissed);
+    }
+    // ♪ bubble: show on approach, auto-hide after 3s without interacting
+    updateRadioProximityHint(within2, shouldShowMusic && (isMobileViewport || !musicDismissed));
+
+    // Spawn floating notes while the music UI is open (Spotify embed play-state is cross-origin)
+    if (isMusicUiVisible()) {
         noteSpawnTimer++;
         if (noteSpawnTimer >= 40) {
             noteSpawnTimer = 0;
             spawnNote();
         }
+    } else {
+        noteSpawnTimer = 0;
     }
 
     if (!player.moving) {
@@ -444,18 +528,15 @@ function update() {
             // Updated Boundary Check (0-40)
             if (nextGridX >= 0 && nextGridX < COLS && nextGridY >= 0 && nextGridY < ROWS) {
 
-                // Check Automated Music Trigger Ring (Moved before collision to allow bumping triggers)
-                const radioTiles = [[21, 18], [21, 19], [21, 20], [22, 20], [23, 20], [24, 20], [24, 19], [24, 18], [23, 18], [22, 18]];
-                if (radioTiles.some(t => t[0] === nextGridX && t[1] === nextGridY)) {
-                    showRadioSpeechBubble = true;
+                // Bumping the boombox: re-open music immediately (clears dismiss)
+                if (RADIO_FOOTPRINT.some(t => t[0] === nextGridX && t[1] === nextGridY)) {
+                    musicDismissed = false;
+                    musicForcedOpen = true;
+                    showRadioSpeechBubble = false;
                     clearTimeout(radioSpeechTimeout);
-                    radioSpeechTimeout = setTimeout(() => showRadioSpeechBubble = false, 3000);
-                    // Desktop-only: show floating Spotify card when approaching boombox.
-                    // Mobile embeds Spotify directly into the console UI (no popup).
-                    if (window.innerWidth >= 769) {
-                        const popup = document.getElementById('music-player-popup');
-                        if (popup) popup.classList.remove('hidden');
-                    }
+                    radioSpeechTimeout = null;
+                    radioBubbleCooldown = true;
+                    setMusicVisible(true);
                 }
 
                 // Surgical Collision Check (8px grid)
@@ -729,8 +810,7 @@ function draw() {
     drawRadioSprite();
     drawPlayerSprite();
 
-    // ── Floating ♪ notes (only when Spotify is playing) ──
-    const isPlaying = window.spotifyState && window.spotifyState.isPlaying;
+    // ── Floating ♪ notes (while music UI is open) ──
     for (let i = noteParticles.length - 1; i >= 0; i--) {
         const n = noteParticles[i];
         n.life -= n.decay;

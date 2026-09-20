@@ -58,16 +58,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         photos.forEach((photo) => {
             const slide = document.createElement('div');
             slide.className = 'photo-slide';
-            slide.innerHTML = `
-                <img src="${photo.url}" alt="${photo.caption}">
-                <div class="caption-container">
-                    <p id="caption">${photo.caption}</p>
-                    <p id="date">${photo.date}</p>
-                </div>
-            `;
-            // Drag protection for the image
-            const img = slide.querySelector('img');
-            if (img) img.addEventListener('dragstart', (e) => e.preventDefault());
+
+            const img = document.createElement('img');
+            img.src = photo.url;
+            img.alt = photo.caption || '';
+            img.addEventListener('dragstart', (e) => e.preventDefault());
+
+            const captionContainer = document.createElement('div');
+            captionContainer.className = 'caption-container';
+
+            const captionEl = document.createElement('p');
+            captionEl.className = 'caption';
+            captionEl.textContent = photo.caption || '';
+
+            const dateEl = document.createElement('p');
+            dateEl.className = 'date';
+            dateEl.textContent = photo.date || '';
+
+            captionContainer.appendChild(captionEl);
+            captionContainer.appendChild(dateEl);
+            slide.appendChild(img);
+            slide.appendChild(captionContainer);
             photoTrack.appendChild(slide);
         });
         updateTrackPosition(false);
@@ -222,8 +233,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function touchMove(event) {
         if (event.touches && event.touches.length === 2) {
-            // Handle Pinch
+            // Handle Pinch — require a valid baseline from touchstart
+            if (!initialPinchDistance) {
+                initialPinchDistance = getDistance(event.touches);
+                baseZoomLevel = zoomLevel;
+                return;
+            }
             const currentDistance = getDistance(event.touches);
+            if (currentDistance <= 0) return;
             const scaleFactor = currentDistance / initialPinchDistance;
             zoomLevel = Math.max(0.5, baseZoomLevel * scaleFactor); // Limit min pinch out
 

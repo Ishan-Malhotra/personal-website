@@ -502,14 +502,19 @@ body.editor-active #dev-tooltip {
         opacity: 0;
         max-height: 0;
         transition: max-height 180ms steps(6, end), opacity 120ms linear, transform 180ms steps(6, end);
+        /* Room for the scaled embed; avoid clipping the play button */
+        box-sizing: border-box;
     }
 
     .spotify-embed-frame-mobile {
         display: block;
-        width: 100% !important;
-        height: 80px !important;
-        max-height: 80px !important;
-        border: 0 !important;
+        /* Width/height set by scaleSpotifyEmbed() — do not force 100% (clips Spotify UI) */
+        width: 300px;
+        height: 80px;
+        max-height: none;
+        border: 0;
+        flex-shrink: 0;
+        transform-origin: top left;
     }
 
     .spotify-pad.spotify-hidden {
@@ -521,7 +526,7 @@ body.editor-active #dev-tooltip {
     }
 
     .spotify-pad:not(.spotify-hidden) {
-        max-height: 80px;
+        max-height: 88px; /* allow scaled height + small buffer */
         opacity: 1;
         transform: translateY(0);
         pointer-events: auto;
