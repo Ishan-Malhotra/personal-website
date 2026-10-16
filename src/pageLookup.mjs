@@ -4,6 +4,17 @@
  */
 
 const OL = 'https://openlibrary.org';
+const TIMEOUT_MS = 6000;
+
+// Open Library asks API clients to identify themselves; browsers can't set
+// User-Agent, so only the server sends it.
+const HEADERS = typeof window === 'undefined'
+  ? { Accept: 'application/json', 'User-Agent': 'IshanMalhotraBookshelf/1.0 (+https://www.ishanmalhotra.me/bookshelf)' }
+  : { Accept: 'application/json' };
+
+function getJSON(url) {
+  return fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(TIMEOUT_MS) });
+}
 
 function cleanTitle(title) {
   return (title || '')
@@ -26,7 +37,7 @@ function titleMatches(wanted, found) {
 
 async function search(params, wantedTitle) {
   const url = `${OL}/search.json?${new URLSearchParams({ ...params, limit: '5', fields: 'title,number_of_pages_median' })}`;
-  const res = await fetch(url, { headers: { Accept: 'application/json' } });
+  const res = await getJSON(url);
   if (!res.ok) throw new Error(`Open Library ${res.status}`);
   const { docs = [] } = await res.json();
   const doc = docs.find((d) => d.number_of_pages_median && titleMatches(wantedTitle, d.title));
@@ -37,7 +48,7 @@ async function search(params, wantedTitle) {
 export async function findPages({ title, author, isbn }) {
   const isbnClean = (isbn || '').replace(/[^0-9Xx]/g, '');
   if (isbnClean) {
-    const res = await fetch(`${OL}/isbn/${isbnClean}.json`, { headers: { Accept: 'application/json' } });
+    const res = await getJSON(`${OL}/isbn/${isbnClean}.json`);
     const pages = res.ok ? (await res.json()).number_of_pages : null;
     if (pages) return pages;
   }

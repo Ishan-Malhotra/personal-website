@@ -539,22 +539,45 @@ window.addEventListener('resize', () => {
 async function init() {
   // 1. Last visit's shelf, instantly.
   const snapshot = readJSON(SNAPSHOT_KEY);
-  if (Array.isArray(snapshot) && snapshot.length) { books = snapshot; render(); }
+  const hadSnapshot = Array.isArray(snapshot) && snapshot.length;
+  if (hadSnapshot) { books = snapshot; render(); }
   else statusEl.textContent = 'LOADING SHELF…';
 
   // Spine sizes are measured per typeface: re-measure once the web fonts land.
   document.fonts.ready.then(() => render());
 
-  // 2. Fresh data: one cached request on Vercel, or the sheet directly in local dev.
+  // 2. First visit: show the sheet itself straight away (≈1s) rather than waiting on
+  //    the server, which may still be gathering page counts. Widths fill in after.
+  let apiDone = false;
+  const direct = hadSnapshot ? null : loadDirect().then((sheet) => {
+    if (apiDone) return sheet;
+    books = sheet;
+    statusEl.textContent = '';
+    render();
+    return sheet;
+  }).catch((err) => { console.warn('[bookshelf] sheet', err); return null; });
+
+  // 3. Fresh data with page counts: one cached request on Vercel.
   try {
     const fromApi = await loadFromApi();
-    books = fromApi || await loadDirect();
+    if (fromApi) {
+      apiDone = true;
+      books = fromApi;
+      statusEl.textContent = '';
+      render();
+      writeJSON(SNAPSHOT_KEY, books);
+      return;
+    }
+    // No /api (local dev): sheet directly, page counts looked up in the browser.
+    books = (direct && await direct) || await loadDirect();
     statusEl.textContent = '';
     render();
     writeJSON(SNAPSHOT_KEY, books);
-    if (!fromApi) fillPagesDirect();
+    fillPagesDirect();
   } catch (err) {
     console.error('[bookshelf]', err);
+    const fallback = direct && await direct;
+    if (fallback) { books = fallback; render(); fillPagesDirect(); return; }
     statusEl.textContent = books.length
       ? 'Showing saved shelf — could not reach the sheet.'
       : `COULD NOT LOAD SHELF. ${err.message || ''}`.trim();
