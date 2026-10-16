@@ -9,10 +9,16 @@ const COLLISION_TILE_SIZE = 8; // Updated to 8px
 const ROWS = 40;               // 320 / 8
 const COLS = 40;               // 320 / 8
 const MOVEMENT_SPEED = 6;
-const MOVEMENT_SPEED_DESKTOP = 7;
+// Desktop draws on whole pixels. 1.75px/frame is a little slower than 2,
+// and the leftover fraction is carried so the sprite never sits between pixels.
+const MOVEMENT_SPEED_DESKTOP = 1.75;
+
+function isDesktopViewport() {
+    return window.innerWidth >= 769;
+}
 
 function getMovementSpeed() {
-    return window.innerWidth >= 769 ? MOVEMENT_SPEED_DESKTOP : MOVEMENT_SPEED;
+    return isDesktopViewport() ? MOVEMENT_SPEED_DESKTOP : MOVEMENT_SPEED;
 }
 
 // Game State
@@ -259,7 +265,8 @@ const player = {
     targetY: 11 * COLLISION_TILE_SIZE,
     frameX: 0,
     frameY: 0,
-    tick: 0
+    tick: 0,
+    moveCarry: 0
 };
 
 // Map Data
@@ -504,7 +511,8 @@ function update() {
         noteSpawnTimer = 0;
     }
 
-    if (!player.moving) {
+    // Returns true when a new tile step actually starts.
+    const beginMoveFromInput = () => {
         let dx = 0;
         let dy = 0;
 
@@ -513,78 +521,101 @@ function update() {
         else if (keys.ArrowLeft || keys.a) dx = -1;
         else if (keys.ArrowRight || keys.d) dx = 1;
 
-        if (dx !== 0 || dy !== 0) {
-            // Update Direction Frame (Rows) - Emerald Order
-            if (dy === 1) player.frameY = 0; // Down
-            if (dx === -1) player.frameY = 1; // Left
-            if (dx === 1) player.frameY = 2; // Right
-            if (dy === -1) player.frameY = 3; // Up
-
-            player.direction = (dy === 1) ? 'down' : (dy === -1) ? 'up' : (dx === -1) ? 'left' : 'right';
-
-            const nextGridX = player.x + dx;
-            const nextGridY = player.y + dy;
-
-            // Updated Boundary Check (0-40)
-            if (nextGridX >= 0 && nextGridX < COLS && nextGridY >= 0 && nextGridY < ROWS) {
-
-                // Bumping the boombox: re-open music immediately (clears dismiss)
-                if (RADIO_FOOTPRINT.some(t => t[0] === nextGridX && t[1] === nextGridY)) {
-                    musicDismissed = false;
-                    musicForcedOpen = true;
-                    showRadioSpeechBubble = false;
-                    clearTimeout(radioSpeechTimeout);
-                    radioSpeechTimeout = null;
-                    radioBubbleCooldown = true;
-                    setMusicVisible(true);
-                }
-
-                // Surgical Collision Check (8px grid)
-                const tileVal = collisionMap[nextGridY][nextGridX];
-                const isBlocked = (tileVal === 1);
-
-                if (!isBlocked) {
-                    player.moving = true;
-                    // Use COLLISION_TILE_SIZE (8) for target pixels
-                    player.targetX = nextGridX * COLLISION_TILE_SIZE;
-                    player.targetY = nextGridY * COLLISION_TILE_SIZE;
-                    player.x = nextGridX;
-                    player.y = nextGridY;
-
-                    if (dy === -1) player.direction = 'up';
-                    if (dy === 1) player.direction = 'down';
-                    if (dx === -1) player.direction = 'left';
-                    if (dx === 1) player.direction = 'right';
-
-                    // Trigger Integration
-                    // Check if tile is 2 OR if it's a Portal Coordinate
-                    const isPortal = PORTALS.some(p => p.coords.some(c => c[0] === nextGridX && c[1] === nextGridY));
-                    if (tileVal === 2 || isPortal) {
-                        checkBuildingTrigger(nextGridX, nextGridY);
-                    }
-                }
-            }
-        } else {
-            // Idle
+        if (dx === 0 && dy === 0) {
             player.frameX = 0;
             player.tick = 0;
+            player.moveCarry = 0;
+            return false;
         }
-    } else {
-        // Moving Animation
+
+        // Update Direction Frame (Rows) - Emerald Order
+        if (dy === 1) player.frameY = 0; // Down
+        if (dx === -1) player.frameY = 1; // Left
+        if (dx === 1) player.frameY = 2; // Right
+        if (dy === -1) player.frameY = 3; // Up
+
+        player.direction = (dy === 1) ? 'down' : (dy === -1) ? 'up' : (dx === -1) ? 'left' : 'right';
+
+        const nextGridX = player.x + dx;
+        const nextGridY = player.y + dy;
+
+        if (nextGridX < 0 || nextGridX >= COLS || nextGridY < 0 || nextGridY >= ROWS) {
+            return false;
+        }
+
+        // Bumping the boombox: re-open music immediately (clears dismiss)
+        if (RADIO_FOOTPRINT.some(t => t[0] === nextGridX && t[1] === nextGridY)) {
+            musicDismissed = false;
+            musicForcedOpen = true;
+            showRadioSpeechBubble = false;
+            clearTimeout(radioSpeechTimeout);
+            radioSpeechTimeout = null;
+            radioBubbleCooldown = true;
+            setMusicVisible(true);
+        }
+
+        const tileVal = collisionMap[nextGridY][nextGridX];
+        if (tileVal === 1) return false;
+
+        player.moving = true;
+        player.targetX = nextGridX * COLLISION_TILE_SIZE;
+        player.targetY = nextGridY * COLLISION_TILE_SIZE;
+        player.x = nextGridX;
+        player.y = nextGridY;
+
+        if (dy === -1) player.direction = 'up';
+        if (dy === 1) player.direction = 'down';
+        if (dx === -1) player.direction = 'left';
+        if (dx === 1) player.direction = 'right';
+
+        const isPortal = PORTALS.some(p => p.coords.some(c => c[0] === nextGridX && c[1] === nextGridY));
+        if (tileVal === 2 || isPortal) {
+            checkBuildingTrigger(nextGridX, nextGridY);
+        }
+        return true;
+    };
+
+    const stepMovement = () => {
         player.tick++;
         if (player.tick % 8 === 0) {
             player.frameX = (player.frameX + 1) % 4;
         }
 
         const speed = getMovementSpeed();
-        if (player.pixelX < player.targetX) player.pixelX = Math.min(player.pixelX + speed, player.targetX);
-        if (player.pixelX > player.targetX) player.pixelX = Math.max(player.pixelX - speed, player.targetX);
-        if (player.pixelY < player.targetY) player.pixelY = Math.min(player.pixelY + speed, player.targetY);
-        if (player.pixelY > player.targetY) player.pixelY = Math.max(player.pixelY - speed, player.targetY);
+        const fractional = !Number.isInteger(speed);
+        let pixels = speed;
+        if (fractional) {
+            player.moveCarry += speed;
+            pixels = Math.floor(player.moveCarry);
+            player.moveCarry -= pixels;
+        }
+
+        const stepAxis = (current, target, budget) => {
+            if (budget <= 0 || current === target) return { value: current, used: 0 };
+            const dir = current < target ? 1 : -1;
+            const used = Math.min(budget, Math.abs(target - current));
+            return { value: current + dir * used, used };
+        };
+
+        const nextX = stepAxis(player.pixelX, player.targetX, pixels);
+        const nextY = stepAxis(player.pixelY, player.targetY, pixels - nextX.used);
+        player.pixelX = nextX.value;
+        player.pixelY = nextY.value;
+        const unused = pixels - nextX.used - nextY.used;
+        if (fractional && unused > 0) player.moveCarry += unused;
 
         if (player.pixelX === player.targetX && player.pixelY === player.targetY) {
             player.moving = false;
         }
+    };
+
+    if (!player.moving) {
+        beginMoveFromInput();
+        // Desktop used to spend a whole frame "starting" a tile before any
+        // pixels moved, so the sprite froze between every step.
+        if (player.moving && isDesktopViewport()) stepMovement();
+    } else {
+        stepMovement();
     }
 }
 
