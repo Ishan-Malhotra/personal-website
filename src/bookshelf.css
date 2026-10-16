@@ -1,0 +1,397 @@
+/* Bookshelf page — GBA-style pixel bookcase (sits on top of pageStyles.css) */
+
+.bookshelf-page {
+  --row: 250px;            /* max spine (240) + headroom */
+  --board: 20px;
+  --wall: #1c1f3c;
+  --wall-dark: #131529;
+  --wall-line: #22264a;
+  --wood: #6a2c44;
+  --wood-hi: #9c4a64;
+  --wood-sh: #3c1426;
+  --wood-dark: #2a0c1a;
+  --outline: #0b0c18;
+  --cream: #f6ecd0;
+
+  -webkit-font-smoothing: none;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- top bar ---------- */
+
+.shelf-topbar {
+  width: min(1180px, 100%);
+}
+
+.shelf-search input {
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  width: 200px;
+  max-width: 50vw;
+  padding: 10px 12px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow), inset 0 0 0 2px var(--paper-edge);
+  outline: none;
+}
+
+.shelf-search input:focus {
+  border-color: var(--accent);
+}
+
+/* ---------- bookcase frame ---------- */
+
+.bookcase {
+  width: min(1180px, 100%);
+  background-color: var(--wood);
+  /* pixel wood grain */
+  background-image:
+    repeating-linear-gradient(90deg, transparent 0 22px, rgba(0, 0, 0, 0.10) 22px 24px, transparent 24px 58px, rgba(255, 255, 255, 0.05) 58px 60px),
+    repeating-linear-gradient(0deg, transparent 0 6px, rgba(0, 0, 0, 0.06) 6px 8px);
+  border: 4px solid var(--outline);
+  box-shadow:
+    inset 4px 4px 0 var(--wood-hi),
+    inset -4px -4px 0 var(--wood-sh),
+    10px 10px 0 rgba(0, 0, 0, 0.5);
+  padding: 16px 16px 20px;
+  image-rendering: pixelated;
+}
+
+.bookcase-crown {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: var(--wood-sh);
+  border: 3px solid var(--outline);
+  box-shadow: inset 0 3px 0 var(--wood), inset 0 -3px 0 var(--wood-dark);
+}
+
+.bookcase-crown h1 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--cream);
+  text-shadow: 2px 2px 0 var(--outline);
+  letter-spacing: 2px;
+}
+
+.book-count {
+  font-size: 8px;
+  color: #f0c040;
+  text-shadow: 1px 1px 0 var(--outline);
+}
+
+.shelf-section + .shelf-section {
+  margin-top: 20px;
+}
+
+.shelf-plaque {
+  display: inline-block;
+  font-size: 8px;
+  color: #2a1608;
+  background: #e8b860;
+  border: 3px solid var(--outline);
+  box-shadow: inset 2px 2px 0 #fbe0a0, inset -2px -2px 0 #a87428;
+  padding: 6px 10px;
+  margin: 0 0 -3px 10px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Shelves are packed in JS into .shelf-row elements, each exactly --row + --board
+   tall, so the repeating gradient lays a board under every row. */
+.shelf-rows {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(var(--row) + var(--board));
+  padding: 0 14px;
+  border: 4px solid var(--outline);
+  background-color: var(--wall);
+  background-image:
+    /* shelf boards: highlight lip, face, shadow, dark underside */
+    repeating-linear-gradient(to bottom,
+      transparent 0,
+      transparent var(--row),
+      var(--wood-hi) var(--row),
+      var(--wood-hi) calc(var(--row) + 3px),
+      var(--wood) calc(var(--row) + 3px),
+      var(--wood) calc(var(--row) + var(--board) - 6px),
+      var(--wood-sh) calc(var(--row) + var(--board) - 6px),
+      var(--wood-sh) calc(var(--row) + var(--board) - 3px),
+      var(--wood-dark) calc(var(--row) + var(--board) - 3px),
+      var(--wood-dark) calc(var(--row) + var(--board))),
+    /* shadow cast onto the back wall under each board */
+    repeating-linear-gradient(to bottom,
+      rgba(0, 0, 0, 0.35) 0,
+      rgba(0, 0, 0, 0.35) 8px,
+      transparent 8px,
+      transparent calc(var(--row) + var(--board))),
+    /* back-panel planks */
+    repeating-linear-gradient(90deg, transparent 0 46px, var(--wall-line) 46px 48px),
+    linear-gradient(90deg, var(--wall-dark) 0 8px, transparent 8px calc(100% - 8px), var(--wall-dark) calc(100% - 8px));
+  background-position: 0 0, 0 calc(var(--row) + var(--board)), 0 0, 0 0;
+}
+
+.shelf-row {
+  display: flex;
+  align-items: flex-start;
+  height: calc(var(--row) + var(--board));
+}
+
+/* One author's books, kept side by side */
+.author-group {
+  display: flex;
+  align-items: flex-start;
+}
+
+#shelf-collection {
+  min-height: calc((var(--row) + var(--board)) * 3);
+}
+
+/* ---------- book spines (real-book look inside the pixel bookcase) ---------- */
+
+.book {
+  position: relative;
+  flex: 0 0 auto;
+  width: var(--w);
+  height: var(--h);
+  margin: calc(var(--row) - var(--h)) 0 var(--board) 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+  background-color: var(--base);
+  /* soft rounded-spine shading: lit left edge, shadowed right edge */
+  background-image:
+    linear-gradient(90deg,
+      rgba(255, 255, 255, 0.16) 0,
+      rgba(255, 255, 255, 0.05) 3px,
+      rgba(255, 255, 255, 0) 30%,
+      rgba(0, 0, 0, 0) 75%,
+      rgba(0, 0, 0, 0.10) calc(100% - 3px),
+      rgba(0, 0, 0, 0.30) 100%),
+    linear-gradient(rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0.06));
+  border: 0;
+  border-radius: 2px 2px 0 0;
+  box-shadow: 1px 0 0 rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  cursor: default;
+  -webkit-font-smoothing: antialiased;
+  transition: transform 0.15s ease, background-color 0.4s ease, color 0.4s ease;
+}
+
+.book-title {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-family: var(--font);
+  font-weight: var(--fw);
+  font-style: var(--fst);
+  font-size: var(--fs);
+  line-height: var(--lh);
+  letter-spacing: var(--track);
+  white-space: nowrap;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* Tiny publisher-style marks near the foot of the spine */
+.book--mark-dot::after,
+.book--mark-ring::after,
+.book--mark-bar::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.book--mark-dot::after {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.book--mark-ring::after {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink);
+  box-sizing: border-box;
+}
+
+.book--mark-bar::after {
+  width: 40%;
+  height: 2px;
+  background: var(--ink);
+}
+
+/* Real spine photo from the sheet */
+.book--photo {
+  background: #111;
+  overflow: hidden;
+}
+
+.book--photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.book:hover,
+.book:focus-visible {
+  transform: translateY(-8px);
+  z-index: 2;
+}
+
+.book:focus-visible {
+  outline: 2px dashed #fff;
+  outline-offset: 2px;
+}
+
+.shelf-empty {
+  margin: 0;
+  padding: calc(var(--row) / 2 - 10px) 12px 0;
+  width: 100%;
+  font-size: 8px;
+  line-height: 1.8;
+  color: rgba(246, 236, 208, 0.6);
+  text-align: center;
+}
+
+.shelf-status {
+  margin: 14px 0 0;
+  font-size: 8px;
+  line-height: 1.6;
+  color: var(--cream);
+  text-align: center;
+  text-shadow: 1px 1px 0 var(--outline);
+}
+
+.shelf-status:empty {
+  display: none;
+}
+
+/* ---------- hover card ---------- */
+
+.book-tip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 60;
+  width: max-content;
+  max-width: min(300px, calc(100vw - 16px));
+  padding: 12px 14px 13px;
+  background: var(--paper);
+  border: 4px solid var(--ink);
+  box-shadow: 5px 5px 0 var(--shadow), inset 0 0 0 2px var(--paper-edge);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.12s steps(3, end), transform 0.12s steps(3, end);
+}
+
+.book-tip.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* pixel pointer towards the spine */
+.book-tip::after {
+  content: '';
+  position: absolute;
+  left: var(--arrow-x, 50%);
+  bottom: -14px;
+  margin-left: -7px;
+  border: 7px solid transparent;
+  border-top-color: var(--ink);
+}
+
+.book-tip.below::after {
+  bottom: auto;
+  top: -14px;
+  border-top-color: transparent;
+  border-bottom-color: var(--ink);
+}
+
+.book-tip p {
+  margin: 0;
+}
+
+.tip-title {
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.tip-author {
+  margin-top: 6px !important;
+  font-size: 8px;
+  line-height: 1.6;
+  color: var(--accent);
+}
+
+.tip-notes {
+  margin-top: 8px !important;
+  padding-top: 8px;
+  border-top: 2px dashed var(--paper-edge);
+  font-size: 8px;
+  line-height: 1.9;
+  color: var(--muted);
+  white-space: pre-line;
+}
+
+.tip-author:empty,
+.tip-notes:empty {
+  display: none;
+}
+
+/* ---------- mobile ---------- */
+
+@media (max-width: 600px) {
+  .bookshelf-page {
+    --row: 196px;          /* max spine (186) + headroom */
+    --board: 16px;
+  }
+
+  .bookcase {
+    padding: 8px 8px 12px;
+  }
+
+  .shelf-rows {
+    padding: 0 8px;
+  }
+
+  .bookcase-crown h1 {
+    font-size: 12px;
+  }
+
+  .shelf-search input {
+    width: 140px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book {
+    transition: none;
+  }
+
+  .book-tip {
+    transition: none;
+  }
+}

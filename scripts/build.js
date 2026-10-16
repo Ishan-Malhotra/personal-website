@@ -45,6 +45,13 @@ function rewriteGalleryHtml(html) {
   return html.replace(/src="gallery\.js"/g, 'src="assets/gallery.min.js"');
 }
 
+function rewritePageShellHtml(html) {
+  return html
+    .replace(/href="src\/pageStyles\.css"/g, 'href="assets/pageStyles.min.css"')
+    .replace(/href="src\/bookshelf\.css"/g, 'href="assets/bookshelf.min.css"')
+    .replace(/src="src\/bookshelf\.js"/g, 'src="assets/bookshelf.min.js"');
+}
+
 async function build() {
   console.log('Cleaning dist/...');
   rmrf(DIST);
@@ -81,6 +88,16 @@ async function build() {
       drop: ['console', 'debugger'],
       legalComments: 'none',
       target: ['es2018']
+    }),
+    esbuild.build({
+      entryPoints: [path.join(ROOT, 'src/bookshelf.js')],
+      bundle: true,
+      minify: true,
+      format: 'esm',
+      outfile: path.join(DIST, 'assets/bookshelf.min.js'),
+      drop: ['console', 'debugger'],
+      legalComments: 'none',
+      target: ['es2018']
     })
   ]);
 
@@ -95,6 +112,21 @@ async function build() {
   });
   fs.writeFileSync(path.join(DIST, 'assets/styles.min.css'), cssOut.code);
 
+  let pageCss = fs.readFileSync(path.join(ROOT, 'src/pageStyles.css'), 'utf8');
+  pageCss = pageCss.replace(/url\(\s*(['"]?)\.\.\/assets\//g, 'url($1');
+  const pageCssOut = await esbuild.transform(pageCss, {
+    loader: 'css',
+    minify: true,
+    legalComments: 'none'
+  });
+  fs.writeFileSync(path.join(DIST, 'assets/pageStyles.min.css'), pageCssOut.code);
+
+  const bookshelfCssOut = await esbuild.transform(
+    fs.readFileSync(path.join(ROOT, 'src/bookshelf.css'), 'utf8'),
+    { loader: 'css', minify: true, legalComments: 'none' }
+  );
+  fs.writeFileSync(path.join(DIST, 'assets/bookshelf.min.css'), bookshelfCssOut.code);
+
   console.log('Copying assets...');
   copyDir(path.join(ROOT, 'assets'), path.join(DIST, 'assets'));
   fs.copyFileSync(
@@ -108,6 +140,9 @@ async function build() {
 
   const galleryHtml = fs.readFileSync(path.join(ROOT, 'gallery.html'), 'utf8');
   fs.writeFileSync(path.join(DIST, 'gallery.html'), rewriteGalleryHtml(galleryHtml));
+
+  const bookshelfHtml = fs.readFileSync(path.join(ROOT, 'bookshelf.html'), 'utf8');
+  fs.writeFileSync(path.join(DIST, 'bookshelf.html'), rewritePageShellHtml(bookshelfHtml));
 
   console.log('Build complete → dist/');
 }

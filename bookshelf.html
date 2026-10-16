@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>bookshelf — ishan's space</title>
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍁</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="fetch" href="/api/shelf" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@700&family=Bebas+Neue&family=DM+Serif+Display&family=Libre+Baskerville&family=Oswald:wght@500&family=Playfair+Display:ital,wght@0,700;1,400&family=Press+Start+2P&family=Roboto+Slab:wght@600&family=Work+Sans:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="src/pageStyles.css">
+  <link rel="stylesheet" href="src/bookshelf.css">
+</head>
+
+<body class="page-shell bookshelf-page">
+  <div class="page-topbar shelf-topbar">
+    <a href="index.html">← MAP</a>
+    <label class="shelf-search">
+      <span class="visually-hidden">Search books</span>
+      <input id="shelf-search" type="search" placeholder="SEARCH…" autocomplete="off" spellcheck="false">
+    </label>
+  </div>
+
+  <main class="bookcase" aria-label="Bookshelf">
+    <header class="bookcase-crown">
+      <h1>BOOKSHELF</h1>
+      <span id="book-count" class="book-count"></span>
+    </header>
+
+    <section class="shelf-section" aria-labelledby="fav-label">
+      <div class="shelf-plaque" id="fav-label">★ FAVOURITES</div>
+      <div id="shelf-favourites" class="shelf-rows"></div>
+    </section>
+
+    <section class="shelf-section" aria-labelledby="all-label">
+      <div class="shelf-plaque" id="all-label">COLLECTION</div>
+      <div id="shelf-collection" class="shelf-rows"></div>
+    </section>
+
+    <p id="shelf-status" class="shelf-status" role="status"></p>
+  </main>
+
+  <div id="book-tip" class="book-tip" role="tooltip" aria-hidden="true">
+    <p class="tip-title"></p>
+    <p class="tip-author"></p>
+    <p class="tip-notes"></p>
+  </div>
+
+  <script type="module" src="src/bookshelf.js"></script>
+</body>
+
+</html>
