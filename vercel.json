@@ -2,6 +2,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/bookshelf", "destination": "/bookshelf.html" }
+    { "source": "/bookshelf", "destination": "/bookshelf.html" },
+    { "source": "/work", "destination": "/work.html" }
   ]
 }

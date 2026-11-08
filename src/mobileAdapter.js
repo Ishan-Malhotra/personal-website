@@ -33,6 +33,18 @@
 
     wrapper.appendChild(screenDiv);
 
+    // The Spotify pad belongs to the town (the page with the boombox card)
+    const hasBoombox = !!document.getElementById('music-player-popup');
+    const spotifyPadHTML = hasBoombox ? `
+            <div class="spotify-pad spotify-hidden" aria-label="Spotify player" aria-hidden="true">
+                <iframe
+                    class="spotify-embed-frame-mobile"
+                    src="https://open.spotify.com/embed/playlist/7C6Ex5Rah9aCJxBHNxscch?utm_source=generator&theme=0&compact=1"
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    loading="lazy">
+                </iframe>
+            </div>` : '';
+
     // Create Controls
     const controlsHTML = `
         <div class="controls">
@@ -45,17 +57,10 @@
                     <div class="d-center"></div>
                 </div>
                 <div class="action-pad">
-                    <button data-key="Enter" class="a-btn" aria-label="Interact with boombox">A</button>
+                    <button data-key="Enter" class="a-btn" aria-label="Interact">A</button>
                 </div>
             </div>
-            <div class="spotify-pad spotify-hidden" aria-label="Spotify player" aria-hidden="true">
-                <iframe
-                    class="spotify-embed-frame-mobile"
-                    src="https://open.spotify.com/embed/playlist/7C6Ex5Rah9aCJxBHNxscch?utm_source=generator&theme=0&compact=1"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy">
-                </iframe>
-            </div>
+            ${spotifyPadHTML}
         </div>
     `;
 
@@ -66,6 +71,17 @@
     while (controlsDiv.firstChild) {
         wrapper.appendChild(controlsDiv.firstChild);
     }
+
+    // Page-specific UI lives inside the shell, never as a second floating card:
+    //   data-gba-slot="after-screen"   → between the screen and the controls
+    //   data-gba-slot="after-controls" → inside .controls, under the D-pad
+    const controlsEl = wrapper.querySelector('.controls');
+    document.querySelectorAll('[data-gba-slot="after-screen"]').forEach(node => {
+        wrapper.insertBefore(node, controlsEl);
+    });
+    document.querySelectorAll('[data-gba-slot="after-controls"]').forEach(node => {
+        controlsEl.appendChild(node);
+    });
 
     // 3. Input Bridge
     const buttons = wrapper.querySelectorAll('button[data-key]');

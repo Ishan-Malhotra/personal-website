@@ -1,0 +1,306 @@
+/* Work building: league rooms (work.html).
+   Loaded after styles.css (Game Boy shell) and pageStyles.css (room kit).
+   Room canvas backing store is 208×224; display is always a whole multiple. */
+
+body.league-page {
+    color: var(--ink);
+    font-family: var(--font-pixel);
+}
+
+/* ── Write-up panel (paper card) ── */
+.work-panel {
+    position: relative;
+    z-index: 100;
+    background: var(--paper);
+    border: 5px solid var(--ink);
+    box-shadow:
+        8px 8px 0 var(--shadow),
+        inset 0 0 0 3px var(--paper-edge);
+    padding: 18px 20px 22px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px) scale(0.98);
+    transition:
+        opacity 0.3s ease,
+        transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+        visibility 0s linear 0.3s;
+}
+
+.work-panel.is-open {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition-delay: 0s;
+}
+
+.work-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+
+.work-panel-close {
+    font-family: var(--font-pixel);
+    font-size: 8px;
+    color: #fff;
+    background: var(--ink);
+    border: 2px solid var(--ink);
+    padding: 6px 8px;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 var(--shadow);
+    transition: transform 0.1s ease;
+}
+
+.work-panel-close:hover {
+    transform: translate(-1px, -1px);
+}
+
+.work-panel-close:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 var(--shadow);
+}
+
+.work-panel-title {
+    margin: 0 0 8px;
+    font-size: 13px;
+    line-height: 1.5;
+    text-transform: lowercase;
+}
+
+.work-panel-meta {
+    margin: 0 0 16px;
+    font-size: 8px;
+    line-height: 1.6;
+    color: var(--muted);
+}
+
+.work-panel-meta-line {
+    display: block;
+}
+
+.work-panel-body {
+    overflow-wrap: anywhere;
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.work-panel-body p {
+    margin: 0 0 12px;
+}
+
+.work-panel-body p:last-child {
+    margin-bottom: 0;
+}
+
+.work-panel-body ul {
+    margin: 0 0 12px;
+    padding-left: 18px;
+}
+
+.work-panel-missing {
+    color: var(--muted);
+}
+
+.work-panel-body a {
+    color: var(--accent-dim);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+/* ── Room toolbar (company icons) ── */
+.work-toolbar {
+    position: relative;
+    z-index: 100;
+    display: flex;
+    gap: 16px;
+}
+
+.work-icon {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    padding: 4px;
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--shadow);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s ease;
+}
+
+.work-icon:hover {
+    transform: translate(-1px, -1px);
+}
+
+.work-icon:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 var(--shadow);
+}
+
+.work-icon img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.work-icon-initial {
+    font-family: var(--font-pixel);
+    font-size: 16px;
+    color: var(--ink);
+}
+
+.work-icon.active {
+    border-color: var(--accent);
+}
+
+/* ═══════════ DESKTOP ═══════════ */
+@media (min-width: 769px) {
+    body.league-page {
+        height: auto;
+        min-height: 100vh;
+        overflow: auto;
+        justify-content: center;
+        gap: 0;
+        padding: 24px 16px;
+    }
+
+    .league-topbar {
+        width: min(836px, 100%);
+    }
+
+    .league-stage {
+        display: grid;
+        grid-template-columns: 300px auto 56px;
+        gap: 28px;
+        align-items: start;
+    }
+
+    .league-center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* 2× of 208×224 */
+    .league-page #game-container {
+        box-sizing: content-box;
+        width: 416px;
+        height: 448px;
+    }
+
+    .league-page canvas {
+        width: 416px;
+        height: 448px;
+    }
+
+    .work-panel {
+        max-height: 448px;
+    }
+
+    .work-toolbar {
+        flex-direction: column;
+    }
+}
+
+/* Narrow desktop: tighten so panel + room + toolbar still fit */
+@media (min-width: 769px) and (max-width: 899px) {
+    .league-stage {
+        grid-template-columns: 220px auto 56px;
+        gap: 16px;
+    }
+}
+
+/* 3× when there's room for it */
+@media (min-width: 1180px) and (min-height: 820px) {
+    .league-topbar {
+        width: min(1044px, 100%);
+    }
+
+    .league-page #game-container {
+        width: 624px;
+        height: 672px;
+    }
+
+    .league-page canvas {
+        width: 624px;
+        height: 672px;
+    }
+
+    .work-panel {
+        max-height: 672px;
+    }
+}
+
+/* ═══════════ MOBILE: everything sits inside the Game Boy ═══════════ */
+@media (max-width: 768px) {
+    .league-stage {
+        width: 100%;
+    }
+
+    .league-topbar {
+        width: 340px;
+        max-width: 100%;
+    }
+
+    /* 1× so the room fits the screen without a fractional scale */
+    .league-page canvas {
+        width: 208px !important;
+        height: 224px !important;
+    }
+
+    .league-page .work-toolbar {
+        flex-direction: row;
+        justify-content: center;
+        gap: 18px;
+        margin: -12px 0 22px;
+    }
+
+    .league-page .work-icon {
+        width: 44px;
+        height: 44px;
+        padding: 3px;
+    }
+
+    /* Panel becomes a pad under the D-pad, revealed in steps like .spotify-pad */
+    .league-page .work-panel {
+        visibility: visible;
+        width: 100%;
+        max-height: 0;
+        padding: 0 14px;
+        border-width: 0;
+        box-shadow: inset 0 0 0 3px var(--paper-edge);
+        transform: translateY(8px);
+        pointer-events: none;
+        transition:
+            max-height 180ms steps(6, end),
+            opacity 120ms linear,
+            transform 180ms steps(6, end);
+    }
+
+    .league-page .work-panel.is-open {
+        max-height: 320px;
+        padding: 14px 14px 16px;
+        border-width: 3px;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+
+    .league-page .work-panel-body {
+        font-size: 14px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .work-panel,
+    .league-page .work-panel {
+        transition: none;
+    }
+}

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>work — ishan's space</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍁</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="src/styles.css">
+    <link rel="stylesheet" href="src/pageStyles.css">
+    <link rel="stylesheet" href="src/work.css">
+    <script defer src="/_vercel/insights/script.js"></script>
+</head>
+
+<body class="league-page">
+    <div class="page-topbar league-topbar">
+        <a href="./?from=work">← MAP</a>
+    </div>
+
+    <div class="league-stage">
+        <aside id="work-panel" class="work-panel" aria-hidden="true" aria-live="polite" data-gba-slot="after-controls">
+            <div class="work-panel-head">
+                <button type="button" id="work-panel-close" class="work-panel-close">CLOSE</button>
+            </div>
+            <h1 id="work-panel-title" class="work-panel-title"></h1>
+            <p id="work-panel-meta" class="work-panel-meta"></p>
+            <div id="work-panel-body" class="work-panel-body"></div>
+        </aside>
+
+        <div class="league-center">
+            <div id="game-container">
+                <canvas id="game-canvas" width="208" height="224"></canvas>
+            </div>
+            <div id="desktop-controls-hud">
+                <span>CONTROLS: ARROWS / WASD</span>
+                <span class="sub-text">ESC MAP</span>
+            </div>
+        </div>
+
+        <nav id="work-toolbar" class="work-toolbar" aria-label="Rooms" data-gba-slot="after-screen"></nav>
+    </div>
+
+    <script src="./src/mobileAdapter.js"></script>
+    <script type="module" src="src/league.js"></script>
+</body>
+
+</html>

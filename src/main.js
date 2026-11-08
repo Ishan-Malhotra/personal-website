@@ -1,31 +1,26 @@
 import { MAP_CONFIG } from './mapData.js';
+import {
+    COLLISION_TILE_SIZE,
+    isDesktopViewport,
+    loadPlayerSprites,
+    createPlayer,
+    placePlayer,
+    stepMovement,
+    drawPlayer
+} from './engine/player.js';
 
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 
 // Constants
-const TILE_SIZE = 32;
-const COLLISION_TILE_SIZE = 8; // Updated to 8px
 const ROWS = 40;               // 320 / 8
 const COLS = 40;               // 320 / 8
-const MOVEMENT_SPEED = 6;
-// Desktop draws on whole pixels. 1.75px/frame is a little slower than 2,
-// and the leftover fraction is carried so the sprite never sits between pixels.
-const MOVEMENT_SPEED_DESKTOP = 1.75;
-
-function isDesktopViewport() {
-    return window.innerWidth >= 769;
-}
-
-function getMovementSpeed() {
-    return isDesktopViewport() ? MOVEMENT_SPEED_DESKTOP : MOVEMENT_SPEED;
-}
 
 // Game State
 const PORTALS = [
     { name: 'Home', url: 'https://ishanmalhotra.bearblog.dev/', coords: [[10, 14], [10, 15], [11, 14], [11, 15]] },
     { name: 'Blog', url: 'https://ishanmalhotra.bearblog.dev/blog/', coords: [[28, 12], [29, 12], [29, 13], [28, 13]] },
-    { name: 'Work', url: 'https://ishanmalhotra.bearblog.dev/work/', coords: [[30, 32], [31, 32], [31, 33], [30, 33]] },
+    { name: 'Work', url: 'work.html', coords: [[30, 32], [31, 32], [31, 33], [30, 33]] },
     { name: 'Bookshelf', url: 'bookshelf.html', coords: [[12, 32], [13, 32], [13, 33], [12, 33]] },
     { name: 'X', url: 'https://x.com/_ishanmalhotra_', coords: [[0, 20], [0, 21], [0, 22], [0, 23]] },
     { name: 'Mail', url: 'mailto:ishanmalhotra2004@gmail.com', coords: [[39, 16], [39, 17], [39, 18], [39, 19], [39, 20], [39, 21], [39, 22], [39, 23]] },
@@ -51,33 +46,10 @@ mapImage.src = 'assets/map.webp';
 const radioImage = new Image();
 radioImage.src = 'assets/boombox.webp';
 
-const playerSprites = {};
-let loadedSpritesCount = 0;
-const totalSprites = 16;
-
-function loadPlayerAssets() {
-    const directions = ['down', 'left', 'right', 'up'];
-    directions.forEach(dir => {
-        for (let i = 0; i < 4; i++) {
-            const key = `${dir}_${i}`;
-            const img = new Image();
-            img.src = `assets/player/${key}.webp`;
-            img.onload = () => {
-                loadedSpritesCount++;
-                if (loadedSpritesCount === totalSprites) {
-                    console.log('All 16 Player Sprites Loaded');
-                    playerLoaded = true;
-                }
-            };
-            img.onerror = () => {
-                console.error(`Failed to load sprite: ${key}`);
-            };
-            playerSprites[key] = img;
-        }
-    });
-}
-
-loadPlayerAssets();
+const playerSprites = loadPlayerSprites(() => {
+    console.log('All 16 Player Sprites Loaded');
+    playerLoaded = true;
+});
 
 let isEditorMode = false;
 let inputEnabled = true;
@@ -254,20 +226,14 @@ function spawnNote() {
     });
 }
 
-const player = {
-    x: 20,
-    y: 11,
-    pixelX: 20 * COLLISION_TILE_SIZE,
-    pixelY: 11 * COLLISION_TILE_SIZE,
-    moving: false,
-    direction: 'down',
-    targetX: 20 * COLLISION_TILE_SIZE,
-    targetY: 11 * COLLISION_TILE_SIZE,
-    frameX: 0,
-    frameY: 0,
-    tick: 0,
-    moveCarry: 0
-};
+const player = createPlayer(20, 11);
+
+// Coming back from the league: stand just south of the Work door, not at spawn.
+const WORK_RETURN_TILE = [30, 34];
+if (new URLSearchParams(window.location.search).get('from') === 'work') {
+    placePlayer(player, WORK_RETURN_TILE[0], WORK_RETURN_TILE[1], 'down');
+    history.replaceState(null, '', window.location.pathname + window.location.hash);
+}
 
 // Map Data
 // Map Data (Moved up)
@@ -575,47 +541,13 @@ function update() {
         return true;
     };
 
-    const stepMovement = () => {
-        player.tick++;
-        if (player.tick % 8 === 0) {
-            player.frameX = (player.frameX + 1) % 4;
-        }
-
-        const speed = getMovementSpeed();
-        const fractional = !Number.isInteger(speed);
-        let pixels = speed;
-        if (fractional) {
-            player.moveCarry += speed;
-            pixels = Math.floor(player.moveCarry);
-            player.moveCarry -= pixels;
-        }
-
-        const stepAxis = (current, target, budget) => {
-            if (budget <= 0 || current === target) return { value: current, used: 0 };
-            const dir = current < target ? 1 : -1;
-            const used = Math.min(budget, Math.abs(target - current));
-            return { value: current + dir * used, used };
-        };
-
-        const nextX = stepAxis(player.pixelX, player.targetX, pixels);
-        const nextY = stepAxis(player.pixelY, player.targetY, pixels - nextX.used);
-        player.pixelX = nextX.value;
-        player.pixelY = nextY.value;
-        const unused = pixels - nextX.used - nextY.used;
-        if (fractional && unused > 0) player.moveCarry += unused;
-
-        if (player.pixelX === player.targetX && player.pixelY === player.targetY) {
-            player.moving = false;
-        }
-    };
-
     if (!player.moving) {
         beginMoveFromInput();
         // Desktop used to spend a whole frame "starting" a tile before any
         // pixels moved, so the sprite froze between every step.
-        if (player.moving && isDesktopViewport()) stepMovement();
+        if (player.moving && isDesktopViewport()) stepMovement(player);
     } else {
-        stepMovement();
+        stepMovement(player);
     }
 }
 
@@ -820,14 +752,7 @@ function draw() {
     ctx.textBaseline = 'alphabetic';
 
     // 3. Render Prop (Radio) vs Player
-    const spriteKey = `${player.direction}_${player.frameX}`;
-    const currentSprite = playerSprites[spriteKey];
-
-    const drawPlayerSprite = () => {
-        if (currentSprite && currentSprite.complete) {
-            ctx.drawImage(currentSprite, player.pixelX - 8, player.pixelY - 28, 24, 36);
-        }
-    };
+    const drawPlayerSprite = () => drawPlayer(ctx, player, playerSprites);
 
     const drawRadioSprite = () => {
         if (radioImage.complete) {
