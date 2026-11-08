@@ -119,8 +119,8 @@ Key positions are constants at the top of `src/league.js`:
 
 ## Rules to keep
 
-- **Canvas:** 208×224 backing store, shown at whole multiples only (1× mobile, 2× desktop, 3× at ≥1180×820). `imageSmoothingEnabled` stays `false`.
+- **Canvas:** 208×224 backing store, shown at whole multiples only (2× desktop, 3× at ≥1180×820; on mobile a whole number of device pixels per game pixel, via `fitMobileCanvas()`). `imageSmoothingEnabled` stays `false`.
 - **Fonts:** the panel title and meta use Press Start 2P. Body text uses bold Courier New. Never put paragraphs in Press Start 2P.
-- **Mobile:** the panel and toolbar move into the Game Boy through `data-gba-slot`. Do not build a separate mobile layout.
+- **Mobile:** the panel and toolbar move into the Game Boy through `data-gba-slot`. Do not build a separate mobile layout. The panel grows to full height (the page scrolls, not the panel). When it opens below the fold, a blinking ▼ is drawn at the bottom of the room for 4s, and A scrolls to the write-up.
 - **Interact:** A / Enter / Space is the only interact verb. On this page it reopens the panel when you face the plaque.
 - **Triggers:** never assign `location.href` straight from a trigger. Always fade first.

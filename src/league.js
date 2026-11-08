@@ -84,6 +84,7 @@ let fadePhase = 'in';
 let fadeOpacity = 1;
 let onBlack = null;
 
+let frameCount = 0;
 let isEditor = false;      // Shift+E: draws the collision grid (read-only)
 let busy = false;          // walking somewhere on its own or changing rooms
 let pendingTarget = null;  // room a toolbar click is heading to
@@ -217,11 +218,51 @@ function fillPanel() {
 function openPanel() {
     panel.classList.add('is-open');
     panel.setAttribute('aria-hidden', 'false');
+    // Wait a frame so the opened panel has its real position
+    requestAnimationFrame(maybeShowReadHint);
 }
 
 function closePanel() {
     panel.classList.remove('is-open');
     panel.setAttribute('aria-hidden', 'true');
+    hideReadHint();
+}
+
+// ── Mobile "more text" cue ──
+// On phones the write-up sits under the D-pad, often below the fold. Like
+// Emerald's dialogue arrow, a blinking ▼ at the bottom of the room says
+// there's more; A scrolls to it. Auto-hides when the panel shows or after 4s.
+const isMobileShell = () => window.innerWidth <= 768;
+const prefersReducedMotion = () => window.matchMedia
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let showReadHint = false;
+let readHintTimer = null;
+let panelInView = false;
+
+if ('IntersectionObserver' in window) {
+    new IntersectionObserver(entries => {
+        panelInView = entries[0].isIntersecting;
+        if (panelInView) hideReadHint();
+    }, { threshold: 0.15 }).observe(panel);
+}
+
+function maybeShowReadHint() {
+    if (!isMobileShell() || !panel.classList.contains('is-open')) return;
+    if (panel.getBoundingClientRect().top < window.innerHeight - 48) return;
+    showReadHint = true;
+    clearTimeout(readHintTimer);
+    readHintTimer = setTimeout(hideReadHint, 4000);
+}
+
+function hideReadHint() {
+    showReadHint = false;
+    clearTimeout(readHintTimer);
+    readHintTimer = null;
+}
+
+function scrollToPanel() {
+    hideReadHint();
+    panel.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
 }
 
 // ── Room flow ──
@@ -397,6 +438,22 @@ function drawPlaque() {
     }
 }
 
+/** Blinking ▼ on a paper tab, bottom centre of the room (pixel rows, no font). */
+function drawReadHint() {
+    frameCount++;
+    if (Math.floor(frameCount / 24) % 2 === 1) return;
+    const cx = 104;
+    const y = 208;
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(cx - 8, y - 2, 16, 12);
+    ctx.fillStyle = '#f7f3e8';
+    ctx.fillRect(cx - 7, y - 1, 14, 10);
+    ctx.fillStyle = '#1a1a1a';
+    [10, 8, 6, 4, 2].forEach((w, row) => {
+        ctx.fillRect(cx - w / 2, y + 2 + row, w, 1);
+    });
+}
+
 function drawEditorGrid() {
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
@@ -422,6 +479,7 @@ function draw() {
 
     drawPlaque();
     drawPlayer(ctx, player, sprites);
+    if (showReadHint) drawReadHint();
     if (isEditor) drawEditorGrid();
 
     if (fadePhase === 'out') {
@@ -482,7 +540,14 @@ function handleInteract() {
         && player.y <= DOOR_ROW + 2
         && Math.abs(player.x - LANE_COL) <= 2;
     const onCenter = player.x === CENTER[0] && player.y === CENTER[1];
-    if (facingPlaque || onCenter) openPanel();
+    if (isMobileShell() && panel.classList.contains('is-open')) {
+        if (!panelInView) scrollToPanel();
+        return;
+    }
+    if (facingPlaque || onCenter) {
+        openPanel();
+        if (isMobileShell()) requestAnimationFrame(scrollToPanel);
+    }
 }
 
 panelClose.addEventListener('click', closePanel);
@@ -508,6 +573,33 @@ window.addEventListener('hashchange', () => {
     closePanel();
     fadeOutThen(() => enterRoom(i, 'below'));
 });
+
+// ── Mobile: biggest room that stays on whole device pixels ──
+// CSS px × devicePixelRatio must be a whole multiple of 208, or sprites shimmer.
+// 2× phones get 312px (3 device px per game px), 3× phones 277px (4).
+function fitMobileCanvas() {
+    if (window.innerWidth > 768) {
+        canvas.style.removeProperty('width');
+        canvas.style.removeProperty('height');
+        return;
+    }
+    const screenEl = canvas.closest('.screen');
+    if (!screenEl) return;
+    // The bezel may thin down to 4px a side if that buys the next size up.
+    const MIN_BEZEL = 4;
+    const MAX_BEZEL = 14;
+    const available = screenEl.clientWidth - 2 * MIN_BEZEL;
+    const dpr = window.devicePixelRatio || 1;
+    const k = Math.max(1, Math.floor((available * dpr + 0.01) / canvas.width));
+    const cssWidth = (canvas.width * k) / dpr;
+    const bezel = Math.min(MAX_BEZEL, Math.max(MIN_BEZEL, (screenEl.clientWidth - cssWidth) / 2));
+    screenEl.style.paddingLeft = screenEl.style.paddingRight = `${bezel}px`;
+    canvas.style.setProperty('width', `${cssWidth}px`, 'important');
+    canvas.style.setProperty('height', `${(canvas.height * k) / dpr}px`, 'important');
+}
+
+fitMobileCanvas();
+window.addEventListener('resize', fitMobileCanvas, { passive: true });
 
 // Canvas text needs the bitmap face loaded before the fallback initial draws
 if (document.fonts && document.fonts.load) {

@@ -120,7 +120,7 @@ Hover on physical objects lifts them: books move `translateY(-8px)`; thumbnails 
 
 The canvas backing store stays **320×320**. Display size must stay a whole multiple of 320 (2×, 2.5×, 3×). A fractional scale makes sprites shimmer. `imageSmoothingEnabled` stays `false`. CSS uses both `image-rendering: pixelated` and `crisp-edges`.
 
-The work rooms are the one other canvas: **208×224**, the native size of the room art, shown at 1× on mobile, 2× on desktop, 3× at `≥ 1180×820`. Same rule: whole multiples only.
+The work rooms are the one other canvas: **208×224**, the native size of the room art, shown at 2× on desktop and 3× at `≥ 1180×820`. On mobile, `fitMobileCanvas()` in `src/league.js` picks the largest size that is a whole number of *device* pixels per game pixel (312px on 2× phones, 277px on 3× phones), thinning the screen bezel to as little as 4px when that buys the next size. Same rule: never a fractional device-pixel scale.
 
 `src/mobileAdapter.js` injects the Game Boy only when the viewport is `≤ 768px` at load. Do not build a second mobile layout in `index.html`. Add mobile controls inside `.gba-body` / `.controls`. Other canvas pages hand their UI to the shell with `data-gba-slot="after-screen"` (between the screen and the D-pad) or `data-gba-slot="after-controls"` (inside `.controls`). The Spotify pad is only injected on the page that has `#music-player-popup`.
 

@@ -241,16 +241,31 @@ body.league-page {
 
 /* ═══════════ MOBILE: everything sits inside the Game Boy ═══════════ */
 @media (max-width: 768px) {
+    body.league-page {
+        padding: 12px 8px 24px;
+    }
+
     .league-stage {
         width: 100%;
     }
 
     .league-topbar {
-        width: 340px;
-        max-width: 100%;
+        width: min(364px, 100%);
+        margin-bottom: 12px;
     }
 
-    /* 1× so the room fits the screen without a fractional scale */
+    /* A little wider than the town's shell so a 312px room fits (3 device px per
+       game px on 2× phones). Screen inner width: 364 - 2×12 - 2×14 = 312. */
+    .league-page .gba-body {
+        width: min(364px, 100%);
+        padding-top: 28px;
+    }
+
+    .league-page .screen {
+        padding: 14px 14px 28px;
+    }
+
+    /* 1× fallback; league.js sets the largest whole-device-pixel scale that fits */
     .league-page canvas {
         width: 208px !important;
         height: 224px !important;
@@ -285,8 +300,10 @@ body.league-page {
             transform 180ms steps(6, end);
     }
 
+    /* Full height: the page scrolls, not a box inside it */
     .league-page .work-panel.is-open {
-        max-height: 320px;
+        max-height: 4000px;
+        overflow-y: visible;
         padding: 14px 14px 16px;
         border-width: 3px;
         transform: translateY(0);
