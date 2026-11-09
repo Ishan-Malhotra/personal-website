@@ -3,11 +3,16 @@
 
 export const COLLISION_TILE_SIZE = 8;
 
-// Phones (≤768px). Was 6; a touch slower reads better on the small screen.
-const MOVEMENT_SPEED = 5;
-// Desktop draws on whole pixels. 1.75px/frame is a little slower than 2,
-// and the leftover fraction is carried so the sprite never sits between pixels.
+// Speeds are in game pixels per 1/60 s, not per frame: stepMovement scales by
+// real elapsed time, so 120Hz phones (most recent iPhones) and 144Hz monitors
+// walk at the same pace as 60Hz screens instead of 2x faster.
+// Phones (≤768px): was 6 per frame, which on a 120Hz iPhone meant 12.
+const MOVEMENT_SPEED = 3.5;
+// Desktop draws on whole pixels. 1.75 is a little slower than 2, and the
+// leftover fraction is carried so the sprite never sits between pixels.
 const MOVEMENT_SPEED_DESKTOP = 1.75;
+const FRAME_MS = 1000 / 60;
+const WALK_FRAME_EVERY = 8; // advance the walk cycle every 8 sixtieths of a second
 
 export function isDesktopViewport() {
     return window.innerWidth >= 769;
@@ -70,21 +75,34 @@ export function placePlayer(player, gx, gy, direction) {
     if (direction) player.direction = direction;
 }
 
-/** Advance one frame toward the current target tile. */
+/**
+ * How many 60Hz frames' worth of time passed since the last step (1 at 60Hz,
+ * 0.5 at 120Hz). The first step after standing still counts as one frame, and
+ * long stalls (a background tab) are capped so the sprite never jumps.
+ */
+function elapsedFrames(player) {
+    const now = performance.now();
+    const last = player.lastStepAt;
+    player.lastStepAt = now;
+    if (!last || now - last > 100) return 1;
+    return Math.min((now - last) / FRAME_MS, 3);
+}
+
+/** Advance toward the current target tile by however much time has passed. */
 export function stepMovement(player) {
+    const frames = elapsedFrames(player);
+
     player.tick++;
-    if (player.tick % 8 === 0) {
+    player.animTime = (player.animTime || 0) + frames;
+    if (player.animTime >= WALK_FRAME_EVERY) {
+        player.animTime -= WALK_FRAME_EVERY;
         player.frameX = (player.frameX + 1) % 4;
     }
 
-    const speed = getMovementSpeed();
-    const fractional = !Number.isInteger(speed);
-    let pixels = speed;
-    if (fractional) {
-        player.moveCarry += speed;
-        pixels = Math.floor(player.moveCarry);
-        player.moveCarry -= pixels;
-    }
+    // Whole pixels only; the fraction carries over to the next step.
+    player.moveCarry += getMovementSpeed() * frames;
+    const pixels = Math.floor(player.moveCarry);
+    player.moveCarry -= pixels;
 
     const stepAxis = (current, target, budget) => {
         if (budget <= 0 || current === target) return { value: current, used: 0 };
@@ -98,7 +116,7 @@ export function stepMovement(player) {
     player.pixelX = nextX.value;
     player.pixelY = nextY.value;
     const unused = pixels - nextX.used - nextY.used;
-    if (fractional && unused > 0) player.moveCarry += unused;
+    if (unused > 0) player.moveCarry += unused;
 
     if (player.pixelX === player.targetX && player.pixelY === player.targetY) {
         player.moving = false;
