@@ -8,6 +8,7 @@ import {
     stepMovement,
     drawPlayer
 } from './engine/player.js';
+import { openFeedback, isFeedbackOpen } from './feedback.js';
 
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
@@ -17,13 +18,20 @@ const ROWS = 40;               // 320 / 8
 const COLS = 40;               // 320 / 8
 
 // Game State
+// Pseudo-URL: the east edge opens the "send me a text" form in place.
+// No fade: the player isn't going anywhere.
+const TEXT_URL = 'text:';
+let pendingTextForm = false; // open once the current step finishes
+let textEdgeLatched = false; // don't reopen while walking along the edge
+
 const PORTALS = [
     { name: 'Home', url: 'https://ishanmalhotra.bearblog.dev/', coords: [[10, 14], [10, 15], [11, 14], [11, 15]] },
     { name: 'Blog', url: 'https://ishanmalhotra.bearblog.dev/blog/', coords: [[28, 12], [29, 12], [29, 13], [28, 13]] },
     { name: 'Work', url: 'work.html', coords: [[30, 32], [31, 32], [31, 33], [30, 33]] },
     { name: 'Bookshelf', url: 'bookshelf.html', coords: [[12, 32], [13, 32], [13, 33], [12, 33]] },
     { name: 'X', url: 'https://x.com/_ishanmalhotra_', coords: [[0, 20], [0, 21], [0, 22], [0, 23]] },
-    { name: 'Mail', url: 'mailto:ishanmalhotra2004@gmail.com', coords: [[39, 16], [39, 17], [39, 18], [39, 19], [39, 20], [39, 21], [39, 22], [39, 23]] },
+    // East edge: opens the Formspree "send me a text" form (src/feedback.js), not a page.
+    { name: 'Text', url: TEXT_URL, coords: [[39, 16], [39, 17], [39, 18], [39, 19], [39, 20], [39, 21], [39, 22], [39, 23]] },
     { name: 'Gallery', url: 'gallery.html', coords: [[16, 0], [17, 0], [18, 0], [19, 0], [20, 0], [21, 0], [22, 0], [23, 0]] },
     // South road: walk off the bottom edge (row 39) into the inspirations collage.
     { name: 'Inspirations', url: 'inspirations.html', coords: [[8, 39], [9, 39], [10, 39], [11, 39], [12, 39], [13, 39], [14, 39], [15, 39], [16, 39], [17, 39], [18, 39], [19, 39], [20, 39], [21, 39], [22, 39], [23, 39], [24, 39], [25, 39], [26, 39], [27, 39], [28, 39], [29, 39], [30, 39], [31, 39], [32, 39]] }
@@ -192,7 +200,7 @@ function updateRadioProximityHint(within2, musicOpen) {
 /** A / Enter — interact with boombox when nearby (mobile A button + keyboard) */
 function handleInteract() {
     if (!inputEnabled || isEditorMode || isTransitioning) return;
-    if (document.getElementById('mailto-prompt')) return;
+    if (isFeedbackOpen()) return;
 
     const nearRadio = minDistanceToRadio(player.x, player.y) <= 2
         || isInSpotifyZone(player.x, player.y);
@@ -251,7 +259,13 @@ if (new URLSearchParams(window.location.search).get('from') === 'inspirations') 
 
 
 // Input Handling
+const isTypingTarget = (el) =>
+    el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+
 window.addEventListener('keydown', (e) => {
+    // Typing in a form (e.g. feedback) must not move the player or toggle the editor.
+    if (isTypingTarget(e.target)) return;
+
     // Toggle Editor Mode
     if (e.key === 'E' && e.shiftKey) {
         toggleEditorMode();
@@ -454,6 +468,15 @@ function update() {
 
     if (!inputEnabled || isEditorMode) return;
 
+    // Stepped onto the east edge: open the text form now that the step is done.
+    if (pendingTextForm && !player.moving) {
+        pendingTextForm = false;
+        Object.keys(keys).forEach((k) => { keys[k] = false; });
+        inputEnabled = false;
+        openFeedback({ onClose: () => { inputEnabled = true; } });
+        return;
+    }
+
     // ── Spotify UI: show near boombox; respect desktop dismiss until player leaves zone ──
     const inSpotifyZone = isInSpotifyZone(player.x, player.y);
     const within2 = minDistanceToRadio(player.x, player.y) <= 2;
@@ -543,7 +566,9 @@ function update() {
         if (dx === -1) player.direction = 'left';
         if (dx === 1) player.direction = 'right';
 
-        const isPortal = PORTALS.some(p => p.coords.some(c => c[0] === nextGridX && c[1] === nextGridY));
+        const portalHere = PORTALS.find(p => p.coords.some(c => c[0] === nextGridX && c[1] === nextGridY));
+        const isPortal = Boolean(portalHere);
+        if (!portalHere || portalHere.url !== TEXT_URL) textEdgeLatched = false;
         if (tileVal === 2 || isPortal) {
             checkBuildingTrigger(nextGridX, nextGridY);
         }
@@ -574,142 +599,21 @@ function checkBuildingTrigger(gx, gy) {
         p.coords.some(coord => coord[0] === gx && coord[1] === gy)
     );
 
-    if (portal) {
+    if (portal && portal.url === TEXT_URL) {
+        // In-place form, no fade. Opens once per visit to the edge.
+        if (!textEdgeLatched) {
+            textEdgeLatched = true;
+            pendingTextForm = true;
+        }
+    } else if (portal) {
         console.log(`Triggered Portal: ${portal.name}`);
         pendingURL = portal.url;
         isTransitioning = true;
         inputEnabled = false;
         redirectTriggered = false;
-        if (portal.url.startsWith('mailto:')) {
-            mailDebug('portal_triggered', {
-                name: portal.name,
-                url: portal.url,
-                tile: { x: gx, y: gy },
-                userAgent: navigator.userAgent,
-                hasMailHandlerHint: typeof navigator.registerProtocolHandler === 'function'
-            });
-        }
     } else {
         console.log(`Trigger activated at ${gx}, ${gy} (No Portal)`);
     }
-}
-
-function mailDebug(stage, details = {}) {
-    console.log(`[MAIL DEBUG ${new Date().toISOString()}] ${stage}`, details);
-}
-
-// Chrome blocks programmatic mailto: ("user gesture required") even from
-// location.href inside click handlers. Offer an Open With chooser instead:
-// native mailto <a>, plus Gmail / Outlook web compose (always works).
-function showMailtoPrompt(mailtoUrl) {
-    mailDebug('show_prompt_start', { mailtoUrl });
-
-    const existing = document.getElementById('mailto-prompt');
-    if (existing) {
-        mailDebug('removing_existing_prompt');
-        existing.remove();
-    }
-
-    const email = mailtoUrl.replace(/^mailto:/i, '').split('?')[0];
-    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}`;
-    const outlookUrl = `https://outlook.live.com/mail/0/deeplink/compose?to=${encodeURIComponent(email)}`;
-
-    const prompt = document.createElement('div');
-    prompt.id = 'mailto-prompt';
-    prompt.innerHTML = `
-        <div class="mailto-prompt-card">
-            <p>OPEN WITH</p>
-            <span class="mailto-prompt-email">${email}</span>
-            <div class="mailto-prompt-actions">
-                <a class="mailto-opt mailto-opt-native" href="${mailtoUrl}">MAIL APP</a>
-                <a class="mailto-opt mailto-opt-gmail" href="${gmailUrl}" target="_blank" rel="noopener">GMAIL</a>
-                <a class="mailto-opt mailto-opt-outlook" href="${outlookUrl}" target="_blank" rel="noopener">OUTLOOK</a>
-                <button type="button" class="mailto-opt mailto-opt-copy">COPY EMAIL</button>
-            </div>
-            <button type="button" class="mailto-prompt-close" aria-label="Close">CLOSE</button>
-        </div>
-    `;
-    document.body.appendChild(prompt);
-    mailDebug('prompt_dom_inserted', {
-        promptExists: !!document.getElementById('mailto-prompt'),
-        email,
-        nativeHref: mailtoUrl,
-        gmailUrl,
-        outlookUrl
-    });
-
-    const dismiss = (reason) => {
-        mailDebug('prompt_dismiss', { reason });
-        prompt.remove();
-    };
-
-    const nativeBtn = prompt.querySelector('.mailto-opt-native');
-    const gmailBtn = prompt.querySelector('.mailto-opt-gmail');
-    const outlookBtn = prompt.querySelector('.mailto-opt-outlook');
-    const copyBtn = prompt.querySelector('.mailto-opt-copy');
-    const closeBtn = prompt.querySelector('.mailto-prompt-close');
-
-    // Native mailto: do NOT call location.href — Chrome rejects it without gesture.
-    // Let the <a> default action run untouched.
-    nativeBtn.addEventListener('click', (e) => {
-        mailDebug('chooser_native_click', {
-            href: nativeBtn.href,
-            isTrusted: e.isTrusted,
-            defaultPrevented: e.defaultPrevented
-        });
-        // Keep prompt open briefly so user can fall back to Gmail if OS blocks mailto
-        setTimeout(() => {
-            mailDebug('native_click_complete_prompt_still_open');
-        }, 800);
-    });
-
-    gmailBtn.addEventListener('click', (e) => {
-        mailDebug('chooser_gmail_click', { href: gmailBtn.href, isTrusted: e.isTrusted });
-        setTimeout(() => dismiss('gmail'), 150);
-    });
-
-    outlookBtn.addEventListener('click', (e) => {
-        mailDebug('chooser_outlook_click', { href: outlookBtn.href, isTrusted: e.isTrusted });
-        setTimeout(() => dismiss('outlook'), 150);
-    });
-
-    copyBtn.addEventListener('click', async (e) => {
-        mailDebug('chooser_copy_click', { email, isTrusted: e.isTrusted });
-        try {
-            await navigator.clipboard.writeText(email);
-            copyBtn.textContent = 'COPIED!';
-            mailDebug('copy_success', { email });
-        } catch (err) {
-            mailDebug('copy_failed', { message: String(err) });
-            // Fallback
-            window.prompt('Copy email address:', email);
-        }
-    });
-
-    closeBtn.addEventListener('click', (e) => {
-        mailDebug('close_click', { isTrusted: e.isTrusted });
-        dismiss('close_button');
-    });
-
-    const onVisibility = () => {
-        mailDebug('visibilitychange', { visibilityState: document.visibilityState });
-    };
-    const onBlur = () => mailDebug('window_blur_after_prompt');
-    const onFocus = () => mailDebug('window_focus_after_prompt');
-    document.addEventListener('visibilitychange', onVisibility);
-    window.addEventListener('blur', onBlur);
-    window.addEventListener('focus', onFocus);
-
-    const observer = new MutationObserver(() => {
-        if (!document.getElementById('mailto-prompt')) {
-            mailDebug('prompt_removed_cleanup');
-            document.removeEventListener('visibilitychange', onVisibility);
-            window.removeEventListener('blur', onBlur);
-            window.removeEventListener('focus', onFocus);
-            observer.disconnect();
-        }
-    });
-    observer.observe(document.body, { childList: true });
 }
 
 document.getElementById('close-btn').addEventListener('click', () => {
@@ -846,40 +750,15 @@ function draw() {
         if (fadeOpacity >= 1 && !redirectTriggered) {
             redirectTriggered = true;
             console.log('FINAL REDIRECT TO:', pendingURL);
+            window.location.href = pendingURL;
 
-            // mailto: cannot be opened reliably after an async fade in Chrome
-            // (no user gesture). Show a real clickable link instead.
-            // HTTP / relative portals keep using location.href.
-            if (pendingURL.startsWith('mailto:')) {
-                mailDebug('fade_complete_mailto_branch', {
-                    pendingURL,
-                    fadeOpacity,
-                    isTransitioning,
-                    inputEnabled
-                });
+            // Reset game state after delay so player can continue if they return
+            setTimeout(() => {
                 isTransitioning = false;
                 fadeOpacity = 0;
                 inputEnabled = true;
                 redirectTriggered = false;
-                mailDebug('state_reset_before_prompt', {
-                    isTransitioning,
-                    fadeOpacity,
-                    inputEnabled,
-                    redirectTriggered
-                });
-                showMailtoPrompt(pendingURL);
-            } else {
-                mailDebug('fade_complete_http_branch', { pendingURL });
-                window.location.href = pendingURL;
-
-                // Reset game state after delay so player can continue if they return
-                setTimeout(() => {
-                    isTransitioning = false;
-                    fadeOpacity = 0;
-                    inputEnabled = true;
-                    redirectTriggered = false;
-                }, 1000);
-            }
+            }, 1000);
         }
     }
 }

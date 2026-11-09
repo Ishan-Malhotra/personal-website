@@ -60,7 +60,7 @@ Colors that are specific, and should stay specific:
 | `#e8b860` / `#f0c040` | Shelf plaque and book count | Random gold accents |
 | GBA purple `#7d63c4` → `#4b367c` | Mobile shell only | Desktop frames |
 | A-button red `#e02020` | The Game Boy A button only | Alerts |
-| `#111` | Music card and mailto card | Page backgrounds |
+| `#111` | Music card | Page backgrounds |
 
 Book-cloth colors live in `PALETTE` inside `src/bookshelf.js`. New spine colors belong in that list, paired with an ink that stays readable. Do not pick a spine color in CSS per book.
 
@@ -129,9 +129,9 @@ The work rooms are the one other canvas: **208×224**, the native size of the ro
 
 UI copy is short, dry, and a little like a game menu.
 
-- Labels are one or two words: `Home`, `Blog`, `Work`, `Bookshelf`, `Mail`, `Gallery`.
+- Labels are one or two words: `Home`, `Blog`, `Work`, `Bookshelf`, `Text`, `Gallery`, `Inspo`.
 - Instructions name the input: `CONTROLS: Use ARROW KEYS or WASD to move`, `Walk into buildings to explore`, `CONTROLS: ← →`, `← BACK [ESC]`, `← MAP`.
-- Actions are verbs in caps: `CLOSE`, `OPEN WITH`, `COPY EMAIL`, `SEARCH…`.
+- Actions are verbs in caps: `CLOSE`, `SEND`, `SEARCH…`.
 - Gallery captions are casual lowercase place names. Dates are `mon yyyy`, lowercase month.
 - Do not write marketing lines, emoji (except the favicon and the music `♪`), or explanation paragraphs in the HUD.
 
@@ -151,7 +151,7 @@ Stack new overlays in this order. Do not jump to `99999`.
 | Gallery container while zoomed | 150 |
 | `#music-player-popup` | 900 |
 | Editor buttons | 1000 |
-| `#mailto-prompt` | 2000 |
+| `#feedback-prompt` | 2000 |
 | `#dev-tooltip` (editor only) | 10000 |
 
 ## How features are discovered
@@ -167,7 +167,7 @@ Current places (`PORTALS` in `src/main.js`, coordinates are collision tiles `[x,
 | Work | `work.html` (league rooms) | `(30–31, 32–33)` |
 | Bookshelf | `bookshelf.html` | `(12–13, 32–33)` |
 | X | `https://x.com/_ishanmalhotra_` | `(0, 20–23)` |
-| Mail | `mailto:` chooser | `(39, 16–23)` |
+| Text | "Send me a text" Formspree form over the map, no fade (`src/feedback.js`) | `(39, 16–23)` |
 | Gallery | `gallery.html` | `(16–23, 0)` |
 | Inspirations | `inspirations.html` (returns to `(20, 37)` via `./?from=inspirations`) | `(8–32, 39)` |
 
@@ -187,7 +187,7 @@ Labels in `MAP_CONFIG.dynamicLabels` are pixel positions on the 320 canvas, not 
 
 ### A new place you walk into
 
-1. Add a `PORTALS` entry in `src/main.js`: `name`, `url`, and `coords` on the 8px grid. Relative URLs (`bookshelf.html`) and `https://` both fade to black, then navigate. `mailto:` must go through `showMailtoPrompt`. Do not assign `location.href` to a mailto.
+1. Add a `PORTALS` entry in `src/main.js`: `name`, `url`, and `coords` on the 8px grid. Relative URLs (`bookshelf.html`) and `https://` both fade to black, then navigate. The pseudo-URL `text:` (`TEXT_URL`) skips the fade and opens the text form in place. Use the same pattern for any other in-place overlay.
 2. Paint those tiles as `2` and block the surrounding walls as `1`. Use God mode: **Shift+E**, hover, press `2` or `1`, then **Export Config**, and paste the JSON into `src/mapData.js`. Export is the source of truth; do not hand-edit a huge collision row if you can export it.
 3. Add a `dynamicLabels` entry beside the door, in canvas pixels. Keep the name short enough to read at 8px.
 4. If the destination is a new HTML page, build it as a room (next section) and add a `vercel.json` rewrite if it needs a clean path (`/bookshelf` → `/bookshelf.html`).
@@ -249,6 +249,16 @@ Items live in `inspirationsData.json`, in collage order. Each one has an `id`, `
 - Its floating title card is the **one deliberate glass exception** to "no glassmorphism": frosted, rounded, draggable and collapsible, with its position remembered in `localStorage`. Do not copy the glass card to other pages. The click-through card stays paper and ink.
 - Captions on tiles are world chrome (a black box with white 8px Press Start 2P). The note in the card is Courier New.
 - Step-by-step guide: [docs/adding-inspirations.md](docs/adding-inspirations.md).
+
+### Text
+
+Walking into the east edge opens a "send me a text" form (`src/feedback.js`, styles at the `#feedback-prompt` block in `src/styles.css`). It replaced the old mailto chooser.
+
+- **No fade.** The player isn't going anywhere, so the form opens in place once the step onto the edge finishes. A latch stops it reopening while you walk along the edge; it resets when you step off.
+- It posts to Formspree form `xgaajagq` through the AJAX API (plain `fetch` with `Accept: application/json`, no Formspree library). The endpoint is `FORMSPREE_ENDPOINT` at the top of `src/feedback.js`.
+- Fields: an optional `email` (Formspree uses it as reply-to), a required `message`, a `_gotcha` honeypot, and `_subject`.
+- It is room chrome: the paper dialogue frame, a Press Start 2P title and `SEND` button, and bold Courier New inputs and copy.
+- While it is open, `inputEnabled` is false, so the player can't move. The keydown handler in `src/main.js` also ignores keys typed into inputs and textareas, so Shift+E, WASD and Space type normally. Esc, ✕, or clicking the backdrop closes it.
 
 ### Books
 

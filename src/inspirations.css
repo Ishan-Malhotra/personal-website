@@ -359,10 +359,8 @@ body.page-shell.inspo-page {
     padding: 3px;
   }
 
-  /* No hover on touch: keep titles readable on the tile */
+  /* Titles stay hidden until a tile is hovered or tapped (same as desktop) */
   .inspo-caption {
-    opacity: 1;
-    transform: none;
     font-size: 7px;
     left: 4px;
     bottom: 4px;

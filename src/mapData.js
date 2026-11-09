@@ -1708,7 +1708,7 @@ export const MAP_CONFIG = {
             "y": 179
         },
         {
-            "text": "Mail",
+            "text": "Text",
             "x": 298,
             "y": 171.5
         },

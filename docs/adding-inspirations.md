@@ -74,7 +74,7 @@ This downloads each new backdrop to `assets/inspirations/<id>.webp` and rewrites
 - Mixing in a `big` or `wide` every few items gives the packed, film-still look.
 - Film stills look best as `wide` or `big`. Book covers and posters look best as `tall`.
 - Filter buttons only appear for types that actually have items, and only when there are at least two types.
-- Columns: as many 220px columns as fit (re-laid out when the count changes on resize). On phones (≤ 768px) the grid is always two columns, `big` becomes `wide`, captions are always visible, and the popup opens as a bottom sheet.
+- Columns: as many 220px columns as fit (re-laid out when the count changes on resize). On phones (≤ 768px) the grid is always two columns, `big` becomes `wide`, titles stay hidden until a tile is hovered or tapped, and the popup opens as a bottom sheet.
 - If a TMDB backdrop has baked-in black bars, trim them with sharp's `.trim({ background: '#000000', threshold: 20 })`. Check the result, because dark scenes can lose real picture.
 - The title card floats over the collage. Drag it anywhere, or collapse it with `–`. Its position and collapsed state are remembered per browser (`localStorage` key `inspo-card`). The `←` button on it goes back to the map.
 - Keys: ESC closes the popup, or goes back to the map when no popup is open. ←/→ move between items in the current filter.
