@@ -196,7 +196,7 @@ function fillPanel() {
     panelTitle.textContent = room.company;
     panelMeta.textContent = '';
     panelBody.innerHTML = '';
-    panelBody.scrollTop = 0;
+    panel.scrollTop = 0; // the panel is the scroller; start each room at the top
     loadRoomText(room).then(({ meta, html }) => {
         if (ROOMS[roomIndex] !== room) return; // moved on before it loaded
         panelTitle.textContent = meta.company || room.company;
@@ -262,7 +262,7 @@ function hideReadHint() {
 
 function scrollToPanel() {
     hideReadHint();
-    panel.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+    panel.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'nearest' });
 }
 
 // ── Room flow ──
