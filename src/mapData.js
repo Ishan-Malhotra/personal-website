@@ -1716,6 +1716,11 @@ export const MAP_CONFIG = {
             "text": "Gallery",
             "x": 157.46835443037975,
             "y": 22.35363924050633
+        },
+        {
+            "text": "Inspo",
+            "x": 160,
+            "y": 316
         }
     ]
 };
