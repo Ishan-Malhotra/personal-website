@@ -3,7 +3,8 @@
 
 export const COLLISION_TILE_SIZE = 8;
 
-const MOVEMENT_SPEED = 6;
+// Phones (≤768px). Was 6; a touch slower reads better on the small screen.
+const MOVEMENT_SPEED = 5;
 // Desktop draws on whole pixels. 1.75px/frame is a little slower than 2,
 // and the leftover fraction is carried so the sprite never sits between pixels.
 const MOVEMENT_SPEED_DESKTOP = 1.75;
