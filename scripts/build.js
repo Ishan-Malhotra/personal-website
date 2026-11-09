@@ -58,6 +58,12 @@ function rewriteWorkHtml(html) {
     .replace(/src="src\/league\.js"/g, 'src="assets/league.min.js"');
 }
 
+function rewriteInspirationsHtml(html) {
+  return rewritePageShellHtml(html)
+    .replace(/href="src\/inspirations\.css"/g, 'href="assets/inspirations.min.css"')
+    .replace(/src="src\/inspirations\.js"/g, 'src="assets/inspirations.min.js"');
+}
+
 async function build() {
   console.log('Cleaning dist/...');
   rmrf(DIST);
@@ -114,6 +120,16 @@ async function build() {
       drop: ['console', 'debugger'],
       legalComments: 'none',
       target: ['es2018']
+    }),
+    esbuild.build({
+      entryPoints: [path.join(ROOT, 'src/inspirations.js')],
+      bundle: true,
+      minify: true,
+      format: 'esm',
+      outfile: path.join(DIST, 'assets/inspirations.min.js'),
+      drop: ['console', 'debugger'],
+      legalComments: 'none',
+      target: ['es2018']
     })
   ]);
 
@@ -149,12 +165,22 @@ async function build() {
   );
   fs.writeFileSync(path.join(DIST, 'assets/work.min.css'), workCssOut.code);
 
+  const inspirationsCssOut = await esbuild.transform(
+    fs.readFileSync(path.join(ROOT, 'src/inspirations.css'), 'utf8'),
+    { loader: 'css', minify: true, legalComments: 'none' }
+  );
+  fs.writeFileSync(path.join(DIST, 'assets/inspirations.min.css'), inspirationsCssOut.code);
+
   console.log('Copying assets...');
   copyDir(path.join(ROOT, 'assets'), path.join(DIST, 'assets'));
   copyDir(path.join(ROOT, 'content'), path.join(DIST, 'content'));
   fs.copyFileSync(
     path.join(ROOT, 'galleryData.json'),
     path.join(DIST, 'galleryData.json')
+  );
+  fs.copyFileSync(
+    path.join(ROOT, 'inspirationsData.json'),
+    path.join(DIST, 'inspirationsData.json')
   );
 
   console.log('Writing HTML...');
@@ -169,6 +195,9 @@ async function build() {
 
   const workHtml = fs.readFileSync(path.join(ROOT, 'work.html'), 'utf8');
   fs.writeFileSync(path.join(DIST, 'work.html'), rewriteWorkHtml(workHtml));
+
+  const inspirationsHtml = fs.readFileSync(path.join(ROOT, 'inspirations.html'), 'utf8');
+  fs.writeFileSync(path.join(DIST, 'inspirations.html'), rewriteInspirationsHtml(inspirationsHtml));
 
   console.log('Build complete → dist/');
 }

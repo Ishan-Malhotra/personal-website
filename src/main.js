@@ -24,7 +24,9 @@ const PORTALS = [
     { name: 'Bookshelf', url: 'bookshelf.html', coords: [[12, 32], [13, 32], [13, 33], [12, 33]] },
     { name: 'X', url: 'https://x.com/_ishanmalhotra_', coords: [[0, 20], [0, 21], [0, 22], [0, 23]] },
     { name: 'Mail', url: 'mailto:ishanmalhotra2004@gmail.com', coords: [[39, 16], [39, 17], [39, 18], [39, 19], [39, 20], [39, 21], [39, 22], [39, 23]] },
-    { name: 'Gallery', url: 'gallery.html', coords: [[16, 0], [17, 0], [18, 0], [19, 0], [20, 0], [21, 0], [22, 0], [23, 0]] }
+    { name: 'Gallery', url: 'gallery.html', coords: [[16, 0], [17, 0], [18, 0], [19, 0], [20, 0], [21, 0], [22, 0], [23, 0]] },
+    // South road: walk off the bottom edge (row 39) into the inspirations collage.
+    { name: 'Inspirations', url: 'inspirations.html', coords: [[8, 39], [9, 39], [10, 39], [11, 39], [12, 39], [13, 39], [14, 39], [15, 39], [16, 39], [17, 39], [18, 39], [19, 39], [20, 39], [21, 39], [22, 39], [23, 39], [24, 39], [25, 39], [26, 39], [27, 39], [28, 39], [29, 39], [30, 39], [31, 39], [32, 39]] }
 ];
 
 // Game State
@@ -232,6 +234,13 @@ const player = createPlayer(20, 11);
 const WORK_RETURN_TILE = [30, 34];
 if (new URLSearchParams(window.location.search).get('from') === 'work') {
     placePlayer(player, WORK_RETURN_TILE[0], WORK_RETURN_TILE[1], 'down');
+    history.replaceState(null, '', window.location.pathname + window.location.hash);
+}
+
+// Coming back from the inspirations collage: stand a couple of tiles up the south road.
+const INSPIRATIONS_RETURN_TILE = [20, 37];
+if (new URLSearchParams(window.location.search).get('from') === 'inspirations') {
+    placePlayer(player, INSPIRATIONS_RETURN_TILE[0], INSPIRATIONS_RETURN_TILE[1], 'up');
     history.replaceState(null, '', window.location.pathname + window.location.hash);
 }
 

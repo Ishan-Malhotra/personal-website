@@ -16,6 +16,7 @@ Interior pages sit on the same wallpaper and use the same pixel chrome, but each
 | Gallery | `gallery.html`, `gallery.js`, `galleryData.json` | A Polaroid and a film strip |
 | Bookshelf | `bookshelf.html`, `src/bookshelf.js`, `src/bookshelf.css`, `src/pageStyles.css` | A wooden bookcase |
 | Work | `work.html`, `src/league.js`, `src/workData.js`, `src/work.css` | League rooms, one per role, walked in order |
+| Inspirations | `inspirations.html`, `src/inspirations.js`, `src/inspirations.css`, `inspirationsData.json` | A gap-free full-colour film collage with a floating glass card |
 | Mobile shell | `src/mobileAdapter.js` + the mobile block in `src/styles.css` | A purple Game Boy around the canvas |
 
 Shared chrome on every HTML page:
@@ -168,6 +169,7 @@ Current places (`PORTALS` in `src/main.js`, coordinates are collision tiles `[x,
 | X | `https://x.com/_ishanmalhotra_` | `(0, 20–23)` |
 | Mail | `mailto:` chooser | `(39, 16–23)` |
 | Gallery | `gallery.html` | `(16–23, 0)` |
+| Inspirations | `inspirations.html` (returns to `(20, 37)` via `./?from=inspirations`) | `(8–32, 39)` |
 
 The boombox is not a portal. Standing in `SPOTIFY_ZONE` (or within Manhattan distance 2 of `RADIO_FOOTPRINT`) shows the player. Pressing Enter, Space, or the A button calls `handleInteract()` and forces it open. The `♪` hint auto-hides after 3 seconds.
 
@@ -238,6 +240,15 @@ Roles live in `ROOMS` inside `src/workData.js`, newest first. The first entry is
 - `logo` is a **24×24** WebP drawn 1:1 on the plaque over the door. `icon` is **96×96** for the toolbar. Make both from the original in `assets/work/original/` with a high-quality downscale; do not let the canvas shrink a large logo. A missing file falls back to the company initial.
 - Room art is `assets/league/room_{1,2,3}.webp` and cycles by position, so a fourth role needs only a new entry.
 - Collision is built in code from the room layout (floor rows 6–20, cases at cols 0–2 / 23–25, door `(12–13, 5)`, exit row 21). Shift+E shows it; there is no painter on this page.
+
+### Inspirations
+
+Items live in `inspirationsData.json`, in collage order. Each one has an `id`, `title`, `type` (`film | book | image | music | other`) and optionally `by`, `year`, `image`, `size` (`s | wide | tall | big`) and `note`. Originals go in `originals/inspirations/` (not deployed). `npm run inspo-images` writes the 1600px WebP into `assets/inspirations/`.
+
+- The collage is the one place on the site where images are full-colour, edge-to-edge photos, and it is shuffled on every visit and packed in JS so there are no gaps at any width.
+- Its floating title card is the **one deliberate glass exception** to "no glassmorphism": frosted, rounded, draggable and collapsible, with its position remembered in `localStorage`. Do not copy the glass card to other pages. The click-through card stays paper and ink.
+- Captions on tiles are world chrome (a black box with white 8px Press Start 2P). The note in the card is Courier New.
+- Step-by-step guide: [docs/adding-inspirations.md](docs/adding-inspirations.md).
 
 ### Books
 

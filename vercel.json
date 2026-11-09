@@ -3,6 +3,7 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/bookshelf", "destination": "/bookshelf.html" },
-    { "source": "/work", "destination": "/work.html" }
+    { "source": "/work", "destination": "/work.html" },
+    { "source": "/inspirations", "destination": "/inspirations.html" }
   ]
 }

@@ -1,0 +1,524 @@
+[
+  {
+    "id": "her",
+    "title": "Her",
+    "type": "film",
+    "year": 2013,
+    "image": "assets/inspirations/her.webp",
+    "note": "",
+    "tmdbId": 152601
+  },
+  {
+    "id": "500-days-of-summer",
+    "title": "(500) Days of Summer",
+    "type": "film",
+    "year": 2009,
+    "image": "assets/inspirations/500-days-of-summer.webp",
+    "note": "",
+    "tmdbId": 19913
+  },
+  {
+    "id": "good-will-hunting",
+    "title": "Good Will Hunting",
+    "type": "film",
+    "year": 1997,
+    "image": "assets/inspirations/good-will-hunting.webp",
+    "note": "",
+    "tmdbId": 489
+  },
+  {
+    "id": "before-sunrise",
+    "title": "Before Sunrise",
+    "type": "film",
+    "year": 1995,
+    "image": "assets/inspirations/before-sunrise.webp",
+    "note": "",
+    "tmdbId": 76
+  },
+  {
+    "id": "eternal-sunshine-of-the-spotless-mind",
+    "title": "Eternal Sunshine of the Spotless Mind",
+    "type": "film",
+    "year": 2004,
+    "image": "assets/inspirations/eternal-sunshine-of-the-spotless-mind.webp",
+    "note": "",
+    "tmdbId": 38
+  },
+  {
+    "id": "the-secret-life-of-walter-mitty",
+    "title": "The Secret Life of Walter Mitty",
+    "type": "film",
+    "year": 2013,
+    "image": "assets/inspirations/the-secret-life-of-walter-mitty.webp",
+    "note": "",
+    "tmdbId": 116745
+  },
+  {
+    "id": "the-dark-knight",
+    "title": "The Dark Knight",
+    "type": "film",
+    "year": 2008,
+    "image": "assets/inspirations/the-dark-knight.webp",
+    "note": "",
+    "tmdbId": 155
+  },
+  {
+    "id": "dead-poets-society",
+    "title": "Dead Poets Society",
+    "type": "film",
+    "year": 1989,
+    "image": "assets/inspirations/dead-poets-society.webp",
+    "note": "",
+    "tmdbId": 207
+  },
+  {
+    "id": "boyhood",
+    "title": "Boyhood",
+    "type": "film",
+    "year": 2014,
+    "image": "assets/inspirations/boyhood.webp",
+    "note": "",
+    "tmdbId": 85350
+  },
+  {
+    "id": "the-truman-show",
+    "title": "The Truman Show",
+    "type": "film",
+    "year": 1998,
+    "image": "assets/inspirations/the-truman-show.webp",
+    "note": "",
+    "tmdbId": 37165
+  },
+  {
+    "id": "fight-club",
+    "title": "Fight Club",
+    "type": "film",
+    "year": 1999,
+    "image": "assets/inspirations/fight-club.webp",
+    "note": "",
+    "tmdbId": 550
+  },
+  {
+    "id": "interstellar",
+    "title": "Interstellar",
+    "type": "film",
+    "year": 2014,
+    "image": "assets/inspirations/interstellar.webp",
+    "note": "",
+    "tmdbId": 157336
+  },
+  {
+    "id": "se7en",
+    "title": "Se7en",
+    "type": "film",
+    "year": 1995,
+    "image": "assets/inspirations/se7en.webp",
+    "note": "",
+    "tmdbId": 807
+  },
+  {
+    "id": "diary-of-a-wimpy-kid",
+    "title": "Diary of a Wimpy Kid",
+    "type": "film",
+    "year": 2010,
+    "image": "assets/inspirations/diary-of-a-wimpy-kid.webp",
+    "note": "",
+    "tmdbId": 33217
+  },
+  {
+    "id": "the-lighthouse",
+    "title": "The Lighthouse",
+    "type": "film",
+    "year": 2019,
+    "image": "assets/inspirations/the-lighthouse.webp",
+    "note": "",
+    "tmdbId": 503919
+  },
+  {
+    "id": "dune-part-two",
+    "title": "Dune: Part Two",
+    "type": "film",
+    "year": 2024,
+    "image": "assets/inspirations/dune-part-two.webp",
+    "note": "",
+    "tmdbId": 693134
+  },
+  {
+    "id": "the-amazing-spider-man-2",
+    "title": "The Amazing Spider-Man 2",
+    "type": "film",
+    "year": 2014,
+    "image": "assets/inspirations/the-amazing-spider-man-2.webp",
+    "note": "",
+    "tmdbId": 102382
+  },
+  {
+    "id": "aftersun",
+    "title": "Aftersun",
+    "type": "film",
+    "year": 2022,
+    "image": "assets/inspirations/aftersun.webp",
+    "note": "",
+    "tmdbId": 965150
+  },
+  {
+    "id": "superbad",
+    "title": "Superbad",
+    "type": "film",
+    "year": 2007,
+    "image": "assets/inspirations/superbad.webp",
+    "note": "",
+    "tmdbId": 8363
+  },
+  {
+    "id": "pulp-fiction",
+    "title": "Pulp Fiction",
+    "type": "film",
+    "year": 1994,
+    "image": "assets/inspirations/pulp-fiction.webp",
+    "note": "",
+    "tmdbId": 680
+  },
+  {
+    "id": "die-hard",
+    "title": "Die Hard",
+    "type": "film",
+    "year": 1988,
+    "image": "assets/inspirations/die-hard.webp",
+    "note": "",
+    "tmdbId": 562
+  },
+  {
+    "id": "call-me-by-your-name",
+    "title": "Call Me by Your Name",
+    "type": "film",
+    "year": 2017,
+    "image": "assets/inspirations/call-me-by-your-name.webp",
+    "note": "",
+    "tmdbId": 398818
+  },
+  {
+    "id": "beautiful-boy",
+    "title": "Beautiful Boy",
+    "type": "film",
+    "year": 2018,
+    "image": "assets/inspirations/beautiful-boy.webp",
+    "note": "",
+    "tmdbId": 451915
+  },
+  {
+    "id": "the-boy-and-the-heron",
+    "title": "The Boy and the Heron",
+    "type": "film",
+    "year": 2023,
+    "image": "assets/inspirations/the-boy-and-the-heron.webp",
+    "note": "",
+    "tmdbId": 508883
+  },
+  {
+    "id": "akira",
+    "title": "Akira",
+    "type": "film",
+    "year": 1988,
+    "image": "assets/inspirations/akira.webp",
+    "note": "",
+    "tmdbId": 149
+  },
+  {
+    "id": "gladiator",
+    "title": "Gladiator",
+    "type": "film",
+    "year": 2000,
+    "image": "assets/inspirations/gladiator.webp",
+    "note": "",
+    "tmdbId": 98
+  },
+  {
+    "id": "spider-man-across-the-spider-verse",
+    "title": "Spider-Man: Across the Spider-Verse",
+    "type": "film",
+    "year": 2023,
+    "image": "assets/inspirations/spider-man-across-the-spider-verse.webp",
+    "note": "",
+    "tmdbId": 569094
+  },
+  {
+    "id": "shutter-island",
+    "title": "Shutter Island",
+    "type": "film",
+    "year": 2010,
+    "image": "assets/inspirations/shutter-island.webp",
+    "note": "",
+    "tmdbId": 11324
+  },
+  {
+    "id": "the-hangover",
+    "title": "The Hangover",
+    "type": "film",
+    "year": 2009,
+    "image": "assets/inspirations/the-hangover.webp",
+    "note": "",
+    "tmdbId": 18785
+  },
+  {
+    "id": "rockstar",
+    "title": "Rockstar",
+    "type": "film",
+    "year": 2011,
+    "image": "assets/inspirations/rockstar.webp",
+    "note": "",
+    "tmdbId": 79464
+  },
+  {
+    "id": "tamasha",
+    "title": "Tamasha",
+    "type": "film",
+    "year": 2015,
+    "image": "assets/inspirations/tamasha.webp",
+    "note": "",
+    "tmdbId": 339274
+  },
+  {
+    "id": "the-perks-of-being-a-wallflower",
+    "title": "The Perks of Being a Wallflower",
+    "type": "film",
+    "year": 2012,
+    "image": "assets/inspirations/the-perks-of-being-a-wallflower.webp",
+    "note": "",
+    "tmdbId": 84892
+  },
+  {
+    "id": "project-hail-mary",
+    "title": "Project Hail Mary",
+    "type": "film",
+    "year": 2026,
+    "image": "assets/inspirations/project-hail-mary.webp",
+    "note": "",
+    "tmdbId": 687163
+  },
+  {
+    "id": "10-things-i-hate-about-you",
+    "title": "10 Things I Hate About You",
+    "type": "film",
+    "year": 1999,
+    "image": "assets/inspirations/10-things-i-hate-about-you.webp",
+    "note": "",
+    "tmdbId": 4951
+  },
+  {
+    "id": "notting-hill",
+    "title": "Notting Hill",
+    "type": "film",
+    "year": 1999,
+    "image": "assets/inspirations/notting-hill.webp",
+    "note": "",
+    "tmdbId": 509
+  },
+  {
+    "id": "isle-of-dogs",
+    "title": "Isle of Dogs",
+    "type": "film",
+    "year": 2018,
+    "image": "assets/inspirations/isle-of-dogs.webp",
+    "note": "",
+    "tmdbId": 399174
+  },
+  {
+    "id": "fantastic-mr-fox",
+    "title": "Fantastic Mr. Fox",
+    "type": "film",
+    "year": 2009,
+    "image": "assets/inspirations/fantastic-mr-fox.webp",
+    "note": "",
+    "tmdbId": 10315
+  },
+  {
+    "id": "yeh-jawaani-hai-deewani",
+    "title": "Yeh Jawaani Hai Deewani",
+    "type": "film",
+    "year": 2013,
+    "image": "assets/inspirations/yeh-jawaani-hai-deewani.webp",
+    "note": "",
+    "tmdbId": 185008
+  },
+  {
+    "id": "3-idiots",
+    "title": "3 Idiots",
+    "type": "film",
+    "year": 2009,
+    "image": "assets/inspirations/3-idiots.webp",
+    "note": "",
+    "tmdbId": 20453
+  },
+  {
+    "id": "your-name",
+    "title": "Your Name.",
+    "type": "film",
+    "year": 2016,
+    "image": "assets/inspirations/your-name.webp",
+    "note": "",
+    "tmdbId": 372058
+  },
+  {
+    "id": "about-time",
+    "title": "About Time",
+    "type": "film",
+    "year": 2013,
+    "image": "assets/inspirations/about-time.webp",
+    "note": "",
+    "tmdbId": 122906
+  },
+  {
+    "id": "little-miss-sunshine",
+    "title": "Little Miss Sunshine",
+    "type": "film",
+    "year": 2006,
+    "image": "assets/inspirations/little-miss-sunshine.webp",
+    "note": "",
+    "tmdbId": 773
+  },
+  {
+    "id": "the-darjeeling-limited",
+    "title": "The Darjeeling Limited",
+    "type": "film",
+    "year": 2007,
+    "image": "assets/inspirations/the-darjeeling-limited.webp",
+    "note": "",
+    "tmdbId": 4538
+  },
+  {
+    "id": "knives-out",
+    "title": "Knives Out",
+    "type": "film",
+    "year": 2019,
+    "image": "assets/inspirations/knives-out.webp",
+    "note": "",
+    "tmdbId": 546554
+  },
+  {
+    "id": "harry-potter-and-the-order-of-the-phoenix",
+    "title": "Harry Potter and the Order of the Phoenix",
+    "type": "film",
+    "year": 2007,
+    "image": "assets/inspirations/harry-potter-and-the-order-of-the-phoenix.webp",
+    "note": "",
+    "tmdbId": 675
+  },
+  {
+    "id": "manchester-by-the-sea",
+    "title": "Manchester by the Sea",
+    "type": "film",
+    "year": 2016,
+    "image": "assets/inspirations/manchester-by-the-sea.webp",
+    "note": "",
+    "tmdbId": 334541
+  },
+  {
+    "id": "lady-bird",
+    "title": "Lady Bird",
+    "type": "film",
+    "year": 2017,
+    "image": "assets/inspirations/lady-bird.webp",
+    "note": "",
+    "tmdbId": 391713
+  },
+  {
+    "id": "we-live-in-time",
+    "title": "We Live in Time",
+    "type": "film",
+    "year": 2024,
+    "image": "assets/inspirations/we-live-in-time.webp",
+    "note": "",
+    "tmdbId": 1100099
+  },
+  {
+    "id": "life-of-pi",
+    "title": "Life of Pi",
+    "type": "film",
+    "year": 2012,
+    "image": "assets/inspirations/life-of-pi.webp",
+    "note": "",
+    "tmdbId": 87827
+  },
+  {
+    "id": "october",
+    "title": "October",
+    "type": "film",
+    "year": 2018,
+    "image": "assets/inspirations/october.webp",
+    "note": "",
+    "tmdbId": 496527
+  },
+  {
+    "id": "arrival",
+    "title": "Arrival",
+    "type": "film",
+    "year": 2016,
+    "image": "assets/inspirations/arrival.webp",
+    "note": "",
+    "tmdbId": 329865
+  },
+  {
+    "id": "sinners",
+    "title": "Sinners",
+    "type": "film",
+    "year": 2025,
+    "image": "assets/inspirations/sinners.webp",
+    "note": "",
+    "tmdbId": 1233413
+  },
+  {
+    "id": "oppenheimer",
+    "title": "Oppenheimer",
+    "type": "film",
+    "year": 2023,
+    "image": "assets/inspirations/oppenheimer.webp",
+    "note": "",
+    "tmdbId": 872585
+  },
+  {
+    "id": "the-social-network",
+    "title": "The Social Network",
+    "type": "film",
+    "year": 2010,
+    "image": "assets/inspirations/the-social-network.webp",
+    "note": "",
+    "tmdbId": 37799
+  },
+  {
+    "id": "the-grand-budapest-hotel",
+    "title": "The Grand Budapest Hotel",
+    "type": "film",
+    "year": 2014,
+    "image": "assets/inspirations/the-grand-budapest-hotel.webp",
+    "note": "",
+    "tmdbId": 120467
+  },
+  {
+    "id": "la-la-land",
+    "title": "La La Land",
+    "type": "film",
+    "year": 2016,
+    "image": "assets/inspirations/la-la-land.webp",
+    "note": "",
+    "tmdbId": 313369
+  },
+  {
+    "id": "blade-runner-2049",
+    "title": "Blade Runner 2049",
+    "type": "film",
+    "year": 2017,
+    "image": "assets/inspirations/blade-runner-2049.webp",
+    "note": "",
+    "tmdbId": 335984
+  },
+  {
+    "id": "the-drama",
+    "title": "The Drama",
+    "type": "film",
+    "year": 2026,
+    "image": "assets/inspirations/the-drama.webp",
+    "note": "",
+    "tmdbId": 1325734
+  }
+]

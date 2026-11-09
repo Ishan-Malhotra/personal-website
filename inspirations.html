@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>content i liked — ishan's space</title>
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍁</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="fetch" href="inspirationsData.json" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="src/pageStyles.css">
+  <link rel="stylesheet" href="src/inspirations.css">
+</head>
+
+<body class="page-shell inspo-page">
+  <aside id="inspo-card" class="inspo-card" aria-labelledby="inspo-title">
+    <div class="inspo-card-head">
+      <a class="inspo-icon-btn" href="./?from=inspirations" aria-label="Back to map">←</a>
+      <h1 id="inspo-title">content i liked</h1>
+      <button type="button" class="inspo-icon-btn" id="inspo-collapse" aria-expanded="true"
+        aria-controls="inspo-card-body" aria-label="Collapse">–</button>
+    </div>
+    <div id="inspo-card-body" class="inspo-card-body">
+      <p class="inspo-sub">these are all pieces of content where after i consumed them, i was better.</p>
+      <div id="inspo-filters" class="inspo-filters" role="group" aria-label="Filter by type"></div>
+      <p id="inspo-status" class="inspo-status" role="status"></p>
+    </div>
+  </aside>
+
+  <main id="inspo-collage" class="inspo-collage" aria-label="Content I liked"></main>
+
+  <div id="inspo-popup" class="inspo-popup hidden" role="dialog" aria-modal="true" aria-labelledby="inspo-popup-title">
+    <div class="inspo-popup-backdrop" data-close></div>
+    <article class="inspo-popup-frame">
+      <div class="inspo-popup-media">
+        <img id="inspo-popup-img" alt="">
+      </div>
+      <div class="inspo-popup-text">
+        <span id="inspo-popup-tag" class="inspo-tag"></span>
+        <h2 id="inspo-popup-title"></h2>
+        <p id="inspo-popup-meta" class="dialogue-meta"></p>
+        <p id="inspo-popup-note" class="dialogue-body inspo-note"></p>
+        <div class="inspo-popup-actions">
+          <button type="button" class="page-btn" id="inspo-prev" aria-label="Previous">←</button>
+          <button type="button" class="page-btn" id="inspo-next" aria-label="Next">→</button>
+          <button type="button" class="page-btn secondary" id="inspo-close">CLOSE [ESC]</button>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <script type="module" src="src/inspirations.js"></script>
+</body>
+
+</html>
